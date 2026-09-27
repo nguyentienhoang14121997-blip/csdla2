@@ -1,0 +1,15 @@
+{
+  "name": "CSDL Lớp 11A2",
+  "short_name": "CSDL 11A2",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f4ee",
+  "theme_color": "#233150",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23233150'/%3E%3Ctext x='50' y='66' font-size='55' text-anchor='middle' fill='white'%3E%F0%9F%93%8B%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#233150">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CSDL 11A2">
+<link rel="manifest" href="manifest.json">
+<title>CSDL Lớp 11A2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Serif:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/12.3.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/12.3.0/firebase-firestore-compat.min.js"></script>
+<style>
+:root{
+  --ink:#1c2333; --ink2:#3d4560; --paper:#f6f4ee; --card:#ffffff;
+  --line:#e2ddd0; --navy:#233150; --navy2:#33456e; --amber:#c8862b;
+  --amberbg:#fbeedc; --good:#2f7d4f; --bad:#b2402d; --shadow:rgba(28,35,51,.08);
+  padding-top: env(safe-area-inset-top,0px); padding-bottom: env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--ink:#eae7dd;--ink2:#c3c2ba;--paper:#171a20;--card:#1f232b;--line:#333844;--navy:#8fa6d8;--navy2:#a9bce3;--amber:#e0a955;--amberbg:#3a2f1c;--shadow:rgba(0,0,0,.35);}
+}
+:root[data-theme="dark"]{--ink:#eae7dd;--ink2:#c3c2ba;--paper:#171a20;--card:#1f232b;--line:#333844;--navy:#8fa6d8;--navy2:#a9bce3;--amber:#e0a955;--amberbg:#3a2f1c;--shadow:rgba(0,0,0,.35);}
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'Be Vietnam Pro',-apple-system,"Segoe UI",Roboto,Arial,sans-serif;}
+h1,h2,h3{font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-weight:600;margin:0 0 4px}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);background:var(--navy);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:5}
+.top .brand{font-family:'Noto Serif',Georgia,serif;font-size:18px}
+.top .who{font-size:12.5px;opacity:.85;display:flex;align-items:center;gap:10px}
+.top button{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:5px 10px;font-size:12.5px;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px;box-shadow:0 1px 3px var(--shadow)}
+.tabs{display:flex;gap:6px;margin:16px 0;flex-wrap:wrap}
+.tab{padding:8px 14px;border-radius:20px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-size:13.5px;color:var(--ink2)}
+.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tabs.sub{margin-top:2px}
+.tabs.sub .tab{font-size:12.5px;padding:6px 12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--ink2);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.02em}
+tbody tr:nth-child(even) td{background:rgba(0,0,0,.015)}
+tr:hover td{background:rgba(35,49,80,.05)}
+.tbl-wrap{overflow-x:auto}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600}
+.pill.good{background:#e4f2e8;color:var(--good)}
+.pill.bad{background:#f6e3de;color:var(--bad)}
+.pill.mid{background:var(--amberbg);color:var(--amber)}
+button.btn{background:var(--navy);color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:13.5px;cursor:pointer}
+button.btn.sec{background:transparent;color:var(--navy);border:1px solid var(--navy)}
+button.btn.danger{background:var(--bad)}
+button.btn:disabled{opacity:.5;cursor:default}
+button.link{background:none;border:none;color:var(--navy2);cursor:pointer;font-size:13px;text-decoration:underline;padding:2px}
+input,select,textarea{font-family:inherit;font-size:13.5px;padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink);width:100%}
+label{font-size:12px;color:var(--ink2);display:block;margin-bottom:3px}
+.field{margin-bottom:10px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hero{padding:40px 16px;text-align:center}
+.hero h1{font-size:30px}
+.rolecards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:640px;margin:24px auto 0}
+@media(max-width:640px){.rolecards{grid-template-columns:1fr}.row2{grid-template-columns:1fr}}
+@media(max-width:600px){
+  .wrap{padding:14px 10px 60px}
+  .top{padding:10px 12px;flex-wrap:wrap;row-gap:6px}
+  .top .brand{font-size:15px}
+  .top .who{font-size:11px;gap:6px;flex-wrap:wrap}
+  .top button{padding:4px 8px;font-size:11.5px}
+  h1{font-size:21px}
+  h1,h2{word-break:break-word}
+  h2{font-size:18px}
+  h3{font-size:15.5px}
+  .card{padding:12px}
+  .tabs{gap:5px}
+  .tab{padding:7px 10px;font-size:12px}
+  .tabs.sub .tab{font-size:11px;padding:5px 9px}
+  table{font-size:12px}
+  th,td{padding:7px 8px}
+  .score{font-size:26px}
+  .modal{padding:14px;max-width:94vw}
+  button.btn,button.btn.sec,button.btn.danger{padding:9px 12px;font-size:13px}
+  .link{padding:3px 4px;display:inline-block}
+  input,select,textarea{font-size:16px}
+  .tbl-wrap{-webkit-overflow-scrolling:touch}
+  .rolecard{padding:14px}
+}
+.rolecard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;cursor:pointer;text-align:left}
+.rolecard:hover{border-color:var(--navy)}
+.rolecard b{font-family:'Noto Serif',Georgia,serif;font-size:16px;display:block;margin-bottom:4px}
+.rolecard span{font-size:12.5px;color:var(--ink2)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal{background:var(--card);border-radius:10px;padding:20px;max-width:420px;width:100%;max-height:85vh;overflow:auto}
+.muted{color:var(--ink2);font-size:12.5px}
+.score{font-size:34px;font-family:'Noto Serif',Georgia,serif;font-weight:700}
+.err{color:var(--bad);font-size:12.5px;margin-top:4px}
+.actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+.hint{font-size:12px;color:var(--ink2);margin-top:2px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useMemo} = React;
+
+// ====== CẤU HÌNH FIREBASE — dán thông tin dự án của bạn vào đây ======
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyATNLtaLiOcPBilPsdTo0BP4FXdULMw8l4",
+  authDomain: "csdla2.firebaseapp.com",
+  projectId: "csdla2",
+  storageBucket: "csdla2.firebasestorage.app",
+  messagingSenderId: "290033726413",
+  appId: "1:290033726413:web:7a7596c5e65a03747f4a84"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+// =======================================================================
+
+const RULES=[{code:"01",text:"Bị ghi sổ đầu bài",diem:-10},{code:"02",text:"Nghỉ học/hoạt động tập thể không phép",diem:-30},{code:"03",text:"Đi học muộn",diem:-20},{code:"04",text:"Không làm bài tập, nhiệm vụ GV giao",diem:-20},{code:"05",text:"Không truy bài đầu giờ",diem:-10},{code:"06",text:"Bỏ tiết",diem:-20},{code:"07",text:"Vi phạm trang phục/thẻ/đầu tóc",diem:-10},{code:"08",text:"Vi phạm ăn quà vặt",diem:-10},{code:"09",text:"Không nộp điện thoại đúng giờ",diem:-20},{code:"10",text:"Vi phạm sử dụng điện thoại",diem:-30},{code:"11",text:"Vi phạm ATGT cấp lớp",diem:-30},{code:"12",text:"Vi phạm ATGT cấp trường",diem:-60},{code:"13",text:"Trực nhật không đạt",diem:-20},{code:"14",text:"Tập trung chậm",diem:-20},{code:"15",text:"Nói chuyện riêng/bị nhắc nhở",diem:-10},{code:"C1",text:"Phát biểu xây dựng bài / điểm tốt",diem:5},{code:"C2",text:"Việc tốt, giúp đỡ bạn/lớp",diem:10},{code:"C3",text:"Đóng góp phong trào lớp/trường",diem:20}];
+const ATT_STATUS = [
+  {code:'present', label:'Có mặt', cls:'good'},
+  {code:'late', label:'Đi muộn', cls:'mid'},
+  {code:'absent_p', label:'Vắng có phép', cls:'mid'},
+  {code:'absent_k', label:'Vắng không phép', cls:'bad'},
+];
+function attInfo(code){ return ATT_STATUS.find(a=>a.code===code) || ATT_STATUS[0]; }
+const CV_LABEL = {lop_truong:'Lớp trưởng', bi_thu:'Bí thư', to_truong:'Tổ trưởng', '':''};
+const CV_LABEL_REV = {'Lớp trưởng':'lop_truong', 'Bí thư':'bi_thu', 'Tổ trưởng':'to_truong'};
+function viDate(iso){ if(!iso) return ''; const p=String(iso).split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : iso; }
+function viMonth(ym){ if(!ym) return ''; const p=ym.split('-'); return p.length===2 ? 'Tháng '+parseInt(p[1],10)+'/'+p[0] : ym; }
+function exportXlsx(rows, filename, sheetName){
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName||'Sheet1');
+  XLSX.writeFile(wb, filename);
+}
+async function importStudentsXlsx(file, db, onDone){
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, {type:'array'});
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+  let ok=0, skip=0;
+  for(const r of rows){
+    const ma = String(r['Mã định danh']||'').trim();
+    if(!ma){ skip++; continue; }
+    const snap = await db.doc('students/'+ma).get();
+    const base = snap.exists ? snap.data() : {};
+    const data = {...base, ma,
+      stt: r['STT']!==undefined ? r['STT'] : base.stt,
+      ten: r['Họ và tên'] || base.ten || '',
+      ngaysinh: r['Ngày sinh'] || base.ngaysinh || '',
+      gioitinh: r['Giới tính'] || base.gioitinh || '',
+      to: r['Tổ']!==undefined ? r['Tổ'] : base.to,
+      sdt: r['SĐT liên hệ']!==undefined ? String(r['SĐT liên hệ']) : base.sdt,
+      chucvu: r['Chức vụ']!==undefined ? (CV_LABEL_REV[r['Chức vụ']]||'') : base.chucvu,
+      dantoc: r['Dân tộc'] || base.dantoc || '',
+      trangthai: r['Trạng thái'] || base.trangthai || 'Đang học',
+    };
+    await db.doc('students/'+ma).set(data);
+    ok++;
+  }
+  await onDone();
+  alert('Đã nhập '+ok+' học sinh. Bỏ qua '+skip+' dòng thiếu "Mã định danh".');
+}
+const SEED_STUDENTS = [{"stt": 1, "ma": "0117828849", "ten": "Nguyễn Đình Quốc An", "ngaysinh": "08/07/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0328878968", "buoi": "6 buổi/tuần", "to": 3, "tencha": "Nguyễn Đình Dũng", "tenme": "Nguyễn Thị Huệ", "sdtcha": "", "sdtme": "0328878968", "pw_hs": "08072010", "pw_ph": "0328878968"}, {"stt": 2, "ma": "0131920107", "ten": "Nguyễn Duy Anh", "ngaysinh": "01/03/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0369262760", "buoi": "6 buổi/tuần", "to": 2, "tencha": "Nguyễn Minh Họa", "tenme": "Nguyễn Thị Hòa", "sdtcha": "0904544587", "sdtme": "0369262760", "pw_hs": "01032010", "pw_ph": "0369262760"}, {"stt": 3, "ma": "0132329308", "ten": "Nguyễn Hoàng Anh", "ngaysinh": "22/11/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0377825341", "buoi": "6 buổi/tuần", "to": 2, "tencha": "Nguyễn Văn Tiến", "tenme": "Lê Thị Dự", "sdtcha": "0377825341", "sdtme": "0386342189", "pw_hs": "22112010", "pw_ph": "0377825341"}, {"stt": 4, "ma": "0118206455", "ten": "Nguyễn Thế Tuấn Anh", "ngaysinh": "14/08/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0355799358", "buoi": "6 buổi/tuần", "to": 3, "tencha": "Nguyễn Thế Tới", "tenme": "Vương Thị Nga", "sdtcha": "", "sdtme": "0355799358", "pw_hs": "14082010", "pw_ph": "0355799358"}, {"stt": 5, "ma": "0132680668", "ten": "Phạm Phương Anh", "ngaysinh": "30/10/2010", "gioitinh": "Nữ", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0983791559", "buoi": "6 buổi/tuần", "to": 4, "tencha": "Phạm Xuân Phái", "tenme": "Phạm Thu Hoài", "sdtcha": "0364381381", "sdtme": "0983791559", "pw_hs": "30102010", "pw_ph": "0983791559"}, {"stt": 6, "ma": "0131920114", "ten": "Trần Văn Bách", "ngaysinh": "01/07/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0976637580", "buoi": "6 buổi/tuần", "to": 3, "tencha": "Trần Văn Tú", "tenme": "Nguyễn Thị Mười", "sdtcha": "0976637580", "sdtme": "0902122210", "pw_hs": "01072010", "pw_ph": "0976637580"}, {"stt": 7, "ma": "0117827256", "ten": "Vũ Đình Cương", "ngaysinh": "05/07/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0962850221", "buoi": "6 buổi/tuần", "to": 2, "tencha": "Vũ Đình Biên", "tenme": "Phạm Thị Loan", "sdtcha": "0986747581", "sdtme": "0962850221", "pw_hs": "05072010", "pw_ph": "0962850221"}, {"stt": 8, "ma": "0118206749", "ten": "Nguyễn Doãn Quang Danh", "ngaysinh": "29/12/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0984230241", "buoi": "6 buổi/tuần", "to": 4, "tencha": "Nguyễn Doãn Thành", "tenme": "Vương Thị Hạnh", "sdtcha": "0975172869", "sdtme": "0984230241", "pw_hs": "29122010", "pw_ph": "0984230241"}, {"stt": 9, "ma": "0117827559", "ten": "Nguyễn Như Dương", "ngaysinh": "01/10/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0982740061", "buoi": "6 buổi/tuần", "to": 4, "tencha": "Nguyễn Như Cường", "tenme": "Hà Thị Thanh", "sdtcha": "0985835438", "sdtme": "0982740061", "pw_hs": "01102010", "pw_ph": "0982740061"}, {"stt": 10, "ma": "0139288627", "ten": "Hoàng Duy Đạt", "ngaysinh": "13/09/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0386878844", "buoi": "6 buổi/tuần", "to": 2, "tencha": "Hoàng Duy Linh", "tenme": "Nguyễn Thị Thương", "sdtcha": "0394700669", "sdtme": "0386878844", "pw_hs": "13092010", "pw_ph": "0386878844"}, {"stt": 11, "ma": "0118197481", "ten": "Hoàng Hải Đăng", "ngaysinh": "06/08/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0968198822", "buoi": "6 buổi/tuần", "to": 1, "tencha": "Hoàng Ngọc Yến", "tenme": "Lộ Thị Lên", "sdtcha": "0974302010", "sdtme": "0968198822", "pw_hs": "06082010", "pw_ph": "0968198822"}, {"stt": 12, "ma": "0118014546", "ten": "Vương Sỹ Đông", "ngaysinh": "22/06/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0965166156", "buoi": "6 buổi/tuần", "to": 1, "tencha": "Vương Sỹ Tinh", "tenme": "Nguyễn Thị Hương", "sdtcha": "0985689638", "sdtme": "0965166156", "pw_hs": "22062010", "pw_ph": "0965166156"}, {"stt": 13, "ma": "0118456033", "ten": "Giang Văn Minh Hiếu", "ngaysinh": "21/12/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0349629612", "buoi": "6 buổi/tuần", "to": 1, "tencha": "Giang Văn Thanh", "tenme": "Sỹ Thị Hạ", "sdtcha": "0984134773", "sdtme": "0349629612", "pw_hs": "21122010", "pw_ph": "0349629612"}, {"stt": 14, "ma": "0155826842", "ten": "Nguyễn Gia Hiếu", "ngaysinh": "16/12/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0981607515", "buoi": "6 buổi/tuần", "to": 1, "tencha": "Nguyễn Văn Hào", "tenme": "Nguyễn Thị Khuyên", "sdtcha": "0967601751", "sdtme": "0981607515", "pw_hs": "16122010", "pw_ph": "0981607515"}, {"stt": 15, "ma": "0118489737", "ten": "Nguyễn Phạm Minh Khang", "ngaysinh": "24/09/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0974065106", "buoi": "6 buổi/tuần", "to": 4, "tencha": "Nguyễn Quang Đại", "tenme": "Phạm Thị Hiên", "sdtcha": "0972589617", "sdtme": "0974065106", "pw_hs": "24092010", "pw_ph": "0974065106"}, {"stt": 16, "ma": "0117827516", "ten": "Vũ Đình Khanh", "ngaysinh": "06/03/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0964004830", "buoi": "6 buổi/tuần", "to": 1, "tencha": "Vũ Đình Duy", "tenme": "Tống Thị Tâm", "sdtcha": "0969795861", "sdtme": "0964004830", "pw_hs": "06032010", "pw_ph": "0964004830"}, {"stt": 17, "ma": "0118175036", "ten": "Nguyễn Tùng Lâm", "ngaysinh": "06/07/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0357575999", "buoi": "6 buổi/tuần", "to": 3, "tencha": "Nguyễn Đắc Biên", "tenme": "Ta Thị Hường", "sdtcha": "0357575999", "sdtme": "0838226999", "pw_hs": "06072010", "pw_ph": "0357575999"}, {"stt": 18, "ma": "0118455966", "ten": "Giang Thị Bảo Linh", "ngaysinh": "10/03/2010", "gioitinh": "Nữ", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0967665388", "buoi": "6 buổi/tuần", "to": 2, "tencha": "Giang Văn Cầu", "tenme": "Trần Thị Tâm", "sdtcha": "0967665388", "sdtme": "0962371830", "pw_hs": "10032010", "pw_ph": "0967665388"}, {"stt": 19, "ma": "0132329354", "ten": "Nguyễn Kim Mẫn", "ngaysinh": "05/06/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0973600107", "buoi": "6 buổi/tuần", "to": 1, "tencha": "Nguyễn Kim Mạnh", "tenme": "Đinh Thị Hằng", "sdtcha": "0976230720", "sdtme": "0973600107", "pw_hs": "05062010", "pw_ph": "0973600107"}, {"stt": 20, "ma": "0118175223", "ten": "Nguyễn Hồng Minh", "ngaysinh": "28/09/2010", "gioitinh": "Nữ", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0327823656", "buoi": "6 buổi/tuần", "to": 4, "tencha": "Nguyễn Văn Hiến", "tenme": "Vũ Thị Thuý", "sdtcha": "0972520967", "sdtme": "0984781628", "pw_hs": "28092010", "pw_ph": "0327823656"}, {"stt": 21, "ma": "0132329162", "ten": "Nguyễn Xuân Quang Minh", "ngaysinh": "01/06/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0984908407", "buoi": "6 buổi/tuần", "to": 2, "tencha": "Nguyễn Xuân Toán", "tenme": "Phạm Thị Thủy", "sdtcha": "0904510569", "sdtme": "0984908407", "pw_hs": "01062010", "pw_ph": "0984908407"}, {"stt": 22, "ma": "0118489593", "ten": "Vương Ngọc Minh", "ngaysinh": "11/01/2010", "gioitinh": "Nữ", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0981977500", "buoi": "6 buổi/tuần", "to": 2, "tencha": "Vương Duy Quân", "tenme": "Nguyễn Thị Huyền", "sdtcha": "0981977500", "sdtme": "0983291034", "pw_hs": "11012010", "pw_ph": "0981977500"}, {"stt": 23, "ma": "0118489970", "ten": "Vương Duy Nguyễn", "ngaysinh": "07/05/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0988300449", "buoi": "6 buổi/tuần", "to": 4, "tencha": "Vương Duy Khoái", "tenme": "Nguyễn Thị Tuyên", "sdtcha": "0382206868", "sdtme": "0988300449", "pw_hs": "07052010", "pw_ph": "0988300449"}, {"stt": 24, "ma": "0118206473", "ten": "Nguyễn Khắc Danh Nhân", "ngaysinh": "05/07/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0914341547", "buoi": "6 buổi/tuần", "to": 3, "tencha": "Nguyễn Khắc Thảo", "tenme": "Nguyễn Thị Ninh", "sdtcha": "0914341547", "sdtme": "0982763993", "pw_hs": "05072010", "pw_ph": "0914341547"}, {"stt": 25, "ma": "0131920131", "ten": "Nguyễn Thị Phương Nhi", "ngaysinh": "26/02/2010", "gioitinh": "Nữ", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0389219023", "buoi": "6 buổi/tuần", "to": 3, "tencha": "Nguyễn Tiến Phong", "tenme": "Nguyễn Thị Nhung", "sdtcha": "0975155682", "sdtme": "0389219023", "pw_hs": "26022010", "pw_ph": "0389219023"}, {"stt": 26, "ma": "0139691149", "ten": "Lê Vũ Phong", "ngaysinh": "13/08/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0985758339", "buoi": "6 buổi/tuần", "to": 4, "tencha": "Lê Văn Oai", "tenme": "Nguyễn Thị Thương Huyền", "sdtcha": "0981540007", "sdtme": "0985758339", "pw_hs": "13082010", "pw_ph": "0985758339"}, {"stt": 27, "ma": "0118174483", "ten": "Hồ Hữu Phú", "ngaysinh": "06/01/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0968385872", "buoi": "6 buổi/tuần", "to": 4, "tencha": "Hồ Hữu Dung", "tenme": "Nguyễn Thị Thanh", "sdtcha": "", "sdtme": "0968385872", "pw_hs": "06012010", "pw_ph": "0968385872"}, {"stt": 28, "ma": "0117827422", "ten": "Nguyễn Danh Quang", "ngaysinh": "31/05/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0963182352", "buoi": "6 buổi/tuần", "to": 4, "tencha": "Nguyễn Danh Kiên", "tenme": "Nguyễn Thị Loan", "sdtcha": "0981857683", "sdtme": "0963182352", "pw_hs": "31052010", "pw_ph": "0963182352"}, {"stt": 29, "ma": "0118206279", "ten": "Vương Như Quỳnh", "ngaysinh": "03/11/2010", "gioitinh": "Nữ", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0979043115", "buoi": "6 buổi/tuần", "to": 3, "tencha": "Vương Đình Bắc", "tenme": "Doãn Thị Hương", "sdtcha": "0979511311", "sdtme": "0979043115", "pw_hs": "03112010", "pw_ph": "0979043115"}, {"stt": 30, "ma": "0118455938", "ten": "Nguyễn Danh Sơn", "ngaysinh": "13/06/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0915298366", "buoi": "6 buổi/tuần", "to": 1, "tencha": "Nguyễn Danh Trường", "tenme": "Khuất Thị Ngân", "sdtcha": "0915298366", "sdtme": "0987897826", "pw_hs": "13062010", "pw_ph": "0915298366"}, {"stt": 31, "ma": "0152727758", "ten": "Nguyễn Trung Sơn", "ngaysinh": "04/09/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0912763369", "buoi": "6 buổi/tuần", "to": 2, "tencha": "Nguyễn Thanh Phong", "tenme": "Nguyễn Thị Thu Minh", "sdtcha": "0931431586", "sdtme": "0969617579", "pw_hs": "04092010", "pw_ph": "0912763369"}, {"stt": 32, "ma": "0118197805", "ten": "Phạm Xuân Thắng", "ngaysinh": "20/08/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0981219188", "buoi": "6 buổi/tuần", "to": 1, "tencha": "Phạm Xuân Hùng Phi", "tenme": "Nguyễn Thị Thanh Huyền", "sdtcha": "", "sdtme": "0981219188", "pw_hs": "20082010", "pw_ph": "0981219188"}, {"stt": 33, "ma": "0117827668", "ten": "Tống Quang Hưng Thịnh", "ngaysinh": "17/06/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0966191162", "buoi": "6 buổi/tuần", "to": 2, "tencha": "Tống Quang Sang", "tenme": "Tống Thị Thúy Mỵ", "sdtcha": "", "sdtme": "0966191162", "pw_hs": "17062010", "pw_ph": "0966191162"}, {"stt": 34, "ma": "0117845647", "ten": "Tống Mai Thy", "ngaysinh": "02/05/2010", "gioitinh": "Nữ", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0984838568", "buoi": "6 buổi/tuần", "to": 1, "tencha": "Tống Mai Vũ", "tenme": "Nguyễn Thị Mỹ Hạnh", "sdtcha": "0983840904", "sdtme": "0984838568", "pw_hs": "02052010", "pw_ph": "0984838568"}, {"stt": 35, "ma": "0117827440", "ten": "Nguyễn Như Minh Tiến", "ngaysinh": "20/11/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0355532966", "buoi": "6 buổi/tuần", "to": 4, "tencha": "Nguyễn Như Lưu", "tenme": "Nguyễn Thị Thục", "sdtcha": "0972522631", "sdtme": "0974890485", "pw_hs": "20112010", "pw_ph": "0355532966"}, {"stt": 36, "ma": "0130954143", "ten": "Nguyễn Thị Đài Trang", "ngaysinh": "24/08/2010", "gioitinh": "Nữ", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0966408616", "buoi": "6 buổi/tuần", "to": 3, "tencha": "Nguyễn Văn Sỹ", "tenme": "Nguyễn Thị Thoa", "sdtcha": "0966408616", "sdtme": "0966408616", "pw_hs": "24082010", "pw_ph": "0966408616"}, {"stt": 37, "ma": "0118175189", "ten": "Đỗ Thị Kiều Trinh", "ngaysinh": "28/06/2010", "gioitinh": "Nữ", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0392486336", "buoi": "6 buổi/tuần", "to": 1, "tencha": "Đỗ Viết Dũng", "tenme": "Nguyễn Thị Duyên", "sdtcha": "0983582918", "sdtme": "0392486336", "pw_hs": "28062010", "pw_ph": "0392486336"}, {"stt": 38, "ma": "0131920025", "ten": "Trần Hữu Trường", "ngaysinh": "01/07/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0978038961", "buoi": "6 buổi/tuần", "to": 4, "tencha": "Trần Hữu Tấn", "tenme": "Nguyễn Thị Uyên", "sdtcha": "0984315748", "sdtme": "0978038961", "pw_hs": "01072010", "pw_ph": "0978038961"}, {"stt": 39, "ma": "0117061472", "ten": "Nguyễn Hữu Việt Tú", "ngaysinh": "07/01/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0373940370", "buoi": "6 buổi/tuần", "to": 1, "tencha": "Nguyễn Hữu Tiến", "tenme": "Đắc Thị Dung", "sdtcha": "0373940370", "sdtme": "0362093787", "pw_hs": "07012010", "pw_ph": "0373940370"}, {"stt": 40, "ma": "0130953809", "ten": "Nguyễn Tống Gia Tuấn", "ngaysinh": "08/11/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0987559778", "buoi": "6 buổi/tuần", "to": 2, "tencha": "Nguyễn Văn Lưu", "tenme": "Tống Thị Nhung", "sdtcha": "0396966689", "sdtme": "0987559887", "pw_hs": "08112010", "pw_ph": "0987559778"}, {"stt": 41, "ma": "0118174714", "ten": "Nguyễn Văn Tuấn", "ngaysinh": "19/02/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0374993565", "buoi": "6 buổi/tuần", "to": 1, "tencha": "Nguyễn Văn Công", "tenme": "Nguyễn Thị Trang", "sdtcha": "0972357912", "sdtme": "0374993565", "pw_hs": "19022010", "pw_ph": "0374993565"}, {"stt": 42, "ma": "0117790581", "ten": "Tống Đình Tuấn", "ngaysinh": "17/10/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0386873185", "buoi": "6 buổi/tuần", "to": 3, "tencha": "Tống Đình Nhàn", "tenme": "Tống Thị Hằng", "sdtcha": "0384518650", "sdtme": "0386873185", "pw_hs": "17102010", "pw_ph": "0386873185"}, {"stt": 43, "ma": "0117827687", "ten": "Nguyễn Thanh Tùng", "ngaysinh": "30/10/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0982368484", "buoi": "6 buổi/tuần", "to": 3, "tencha": "Nguyễn Văn Triệu", "tenme": "Đào Thị Kim Thu", "sdtcha": "0986669373", "sdtme": "0982368484", "pw_hs": "30102010", "pw_ph": "0982368484"}, {"stt": 44, "ma": "0132329195", "ten": "Nguyễn Kim Tuyết", "ngaysinh": "13/10/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0395028136", "buoi": "6 buổi/tuần", "to": 3, "tencha": "Nguyễn Kim Cao", "tenme": "Nguyễn Thị Lâm", "sdtcha": "0395028136", "sdtme": "0379089716", "pw_hs": "13102010", "pw_ph": "0395028136"}, {"stt": 45, "ma": "0129836527", "ten": "Nguyễn Đạt Việt", "ngaysinh": "20/01/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0359899371", "buoi": "6 buổi/tuần", "to": 2, "tencha": "Nguyễn Đạt Xuân", "tenme": "Vương Thị Thu", "sdtcha": "0981075246", "sdtme": "0359899371", "pw_hs": "20012010", "pw_ph": "0359899371"}, {"stt": 46, "ma": "0118206308", "ten": "Nguyễn Vũ", "ngaysinh": "08/04/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0347282810", "buoi": "6 buổi/tuần", "to": 4, "tencha": "Nguyễn Xảo", "tenme": "Đăng Thị Đức", "sdtcha": "0347282810", "sdtme": "0347282810", "pw_hs": "08042010", "pw_ph": "0347282810"}, {"stt": 47, "ma": "0131920059", "ten": "Nguyễn Tiến Vương", "ngaysinh": "16/01/2010", "gioitinh": "Nam", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0382493391", "buoi": "6 buổi/tuần", "to": 2, "tencha": "Nguyễn Tiến Đoan", "tenme": "Nguyễn Thị Hiền", "sdtcha": "0983463683", "sdtme": "0382493391", "pw_hs": "16012010", "pw_ph": "0382493391"}, {"stt": 48, "ma": "0117785619", "ten": "Nguyễn Hà Vy", "ngaysinh": "09/07/2010", "gioitinh": "Nữ", "dantoc": "Kinh", "trangthai": "Đang học", "sdt": "0969496450", "buoi": "6 buổi/tuần", "to": 3, "tencha": "Nguyễn Tiến Nghi", "tenme": "Nguyễn Thị Thắm", "sdtcha": "0988394456", "sdtme": "0969496450", "pw_hs": "09072010", "pw_ph": "0969496450"}];
+
+function xlRank(d){ if(d>=90) return {label:'Tốt',cls:'good'}; if(d>=70) return {label:'Khá',cls:'mid'}; return {label:'Cần cố gắng',cls:'bad'}; }
+function totalOf(ma, violations){ let t=100; violations.filter(v=>v.ma===ma).forEach(v=>t+=v.diem); return t; }
+
+// Chia mỗi tháng thành 4 tuần cố định theo ngày trong tháng: 1-7, 8-14, 15-21, 22-cuối tháng
+function monthWeekOf(dateStr){
+  if(!dateStr) return null;
+  const [y,m,d] = dateStr.split('-').map(Number);
+  if(!y||!m||!d) return null;
+  const week = d<=7?1:d<=14?2:d<=21?3:4;
+  return {month: y+'-'+String(m).padStart(2,'0'), week};
+}
+function weekScore(ma, monthStr, weekNum, violations){
+  let t=100;
+  violations.filter(v=>{ const w=monthWeekOf(v.date); return w && w.month===monthStr && w.week===weekNum && v.ma===ma; })
+    .forEach(v=>t+=v.diem);
+  return t;
+}
+// Xếp hạng kiểu thi đấu: điểm bằng nhau thì hạng bằng nhau, hạng sau bị bỏ qua số tương ứng
+function withRank(list, scoreKey){
+  const sorted=[...list].sort((a,b)=>b[scoreKey]-a[scoreKey]);
+  let rank=0, prev=null;
+  return sorted.map((x,i)=>{ if(x[scoreKey]!==prev){ rank=i+1; prev=x[scoreKey]; } return {...x, rank}; });
+}
+// Năm học 2026-2027: HK1 = T9→T1, HK2 = T2→T5
+const SEMESTERS = {
+  HK1: ['2026-09','2026-10','2026-11','2026-12','2027-01'],
+  HK2: ['2027-02','2027-03','2027-04','2027-05'],
+};
+function monthOf(dateStr){ return dateStr ? dateStr.slice(0,7) : null; }
+function monthAvg(ma, monthStr, violations){
+  const w=[1,2,3,4].map(n=>weekScore(ma,monthStr,n,violations));
+  return w.reduce((a,b)=>a+b,0)/4;
+}
+function loadSession(){ try{ return JSON.parse(localStorage.getItem('qlhs_session')||'null'); }catch(e){ return null; } }
+function saveSession(s){ try{ localStorage.setItem('qlhs_session', JSON.stringify(s)); }catch(e){} }
+
+const ADMIN_PASSWORD = 'gvcn2026';
+
+function Login({db, onLogin}){
+  const [picking,setPicking] = useState(null);
+  const [students,setStudents] = useState([]);
+  const [ma,setMa] = useState('');
+  const [pw,setPw] = useState('');
+  const [err,setErr] = useState('');
+
+  async function choose(role){
+    setErr(''); setPw('');
+    if(role==='admin'){ setStudents([]); setPicking('admin'); return; }
+    const snap = await db.collection('students').get();
+    let list = snap.docs.map(d=>d.data()).sort((a,b)=>a.stt-b.stt);
+    if(role==='cb') list = list.filter(s=>s.chucvu);
+    setStudents(list);
+    setMa(list[0]?list[0].ma:'');
+    setPicking(role);
+  }
+
+  function submit(){
+    setErr('');
+    if(picking==='admin'){
+      if(pw!==ADMIN_PASSWORD){ setErr('Sai mật khẩu.'); return; }
+      onLogin({role:'admin'}); return;
+    }
+    const s = students.find(x=>x.ma===ma);
+    if(!s){ setErr('Vui lòng chọn tên.'); return; }
+    const need = picking==='ph' ? (s.pw_ph||'') : (s.pw_hs||'');
+    if(pw!==need){ setErr('Sai mật khẩu.'); return; }
+    onLogin({role: picking==='ph'?'ph':picking, ma});
+  }
+
+  return (
+    <div>
+      <div className="top"><div className="brand">CSDL Lớp 11A2</div><div></div></div>
+      <div className="wrap hero">
+        <h1>Chọn vai trò đăng nhập</h1>
+        <p className="muted">THPT Cao Bá Quát — Quốc Oai · Năm học 2026–2027</p>
+        <div className="rolecards">
+          <div className="rolecard" onClick={()=>choose('admin')}><b>Giáo viên chủ nhiệm</b><span>Toàn quyền: thêm/sửa/xoá học sinh, điểm danh, ghi lỗi, phân công cán bộ lớp.</span></div>
+          <div className="rolecard" onClick={()=>choose('cb')}><b>Cán bộ lớp</b><span>Lớp trưởng, Bí thư (toàn lớp) hoặc Tổ trưởng (riêng tổ mình) — quản lý điểm danh và ghi lỗi nề nếp.</span></div>
+          <div className="rolecard" onClick={()=>choose('hs')}><b>Học sinh</b><span>Xem thông tin và kết quả nề nếp của bản thân.</span></div>
+          <div className="rolecard" onClick={()=>choose('ph')}><b>Phụ huynh</b><span>Theo dõi chuyên cần và nề nếp của con.</span></div>
+        </div>
+        {picking && (
+          <div className="card" style={{maxWidth:420,margin:'22px auto 0',textAlign:'left'}}>
+            {picking!=='admin' && (students.length ? (
+              <>
+                <label>{picking==='ph'?'Chọn tên con của bạn':'Chọn tên của bạn'}</label>
+                <select value={ma} onChange={e=>setMa(e.target.value)}>
+                  {students.map(s=><option key={s.ma} value={s.ma}>{s.ten}{picking==='cb'?' — '+(CV_LABEL[s.chucvu]||'')+(s.chucvu==='to_truong'?' Tổ '+s.to:''):''}</option>)}
+                </select>
+              </>
+            ) : <p className="hint">Giáo viên chưa phân công cán bộ lớp nào. Vui lòng liên hệ GVCN.</p>)}
+            {(picking==='admin' || students.length>0) && <>
+              <div className="field" style={{marginTop:10}}><label>Mật khẩu</label>
+                <input type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()}/>
+              </div>
+              {err && <div className="err">{err}</div>}
+              <div className="actions"><button className="btn" onClick={submit}>Đăng nhập</button></div>
+            </>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Modal({modal, onClose, onSave, err}){
+  if(!modal) return null;
+  const [form,setForm] = useState(()=> modal.type==='logViolation'
+    ? {text:modal.edit?.text||'', diem:modal.edit?.diem??-10, date:modal.edit?.date||modal.defaultDate||new Date().toISOString().slice(0,10), note:modal.edit?.note||''}
+    : modal.type==='editStudent' ? {...modal.data} : {});
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+
+  let body=null;
+  if(modal.type==='logViolation'){
+    body = <>
+      <h3>{modal.edit?'Sửa ghi nhận':'Ghi nhận'}: {modal.student.ten}</h3>
+      <div className="field"><label>Loại</label>
+        <select onChange={e=>{ const r=RULES.find(x=>x.code===e.target.value); if(r) setForm(f=>({...f,text:r.text,diem:r.diem})); }}>
+          <option value="">— Tuỳ chọn khác —</option>
+          {RULES.map(r=><option key={r.code} value={r.code}>{r.diem>0?'+':''}{r.diem} — {r.text}</option>)}
+        </select>
+      </div>
+      <div className="field"><label>Nội dung</label><input value={form.text} onChange={e=>set('text',e.target.value)} placeholder="Nội dung ghi nhận"/></div>
+      <div className="row2">
+        <div className="field"><label>Điểm (+/-)</label><input type="number" value={form.diem} onChange={e=>set('diem',parseInt(e.target.value,10))}/></div>
+        <div className="field"><label>Ngày</label><input type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></div>
+      </div>
+      <div className="field"><label>Ghi chú (không bắt buộc)</label><input value={form.note} onChange={e=>set('note',e.target.value)}/></div>
+      {err && <div className="err">{err}</div>}
+      <div className="actions"><button className="btn sec" onClick={onClose}>Huỷ</button><button className="btn" onClick={()=>onSave(form)}>Lưu</button></div>
+    </>;
+  } else if(modal.type==='editStudent'){
+    body = <>
+      <h3>{modal.ma?'Sửa':'Thêm'} học sinh</h3>
+      <div className="field"><label>Họ tên</label><input value={form.ten||''} onChange={e=>set('ten',e.target.value)}/></div>
+      <div className="row2">
+        <div className="field"><label>Mã định danh</label><input value={form.ma||''} disabled={!!modal.ma} onChange={e=>set('ma',e.target.value)}/></div>
+        <div className="field"><label>Tổ</label><input type="number" value={form.to??''} onChange={e=>set('to',parseInt(e.target.value,10)||null)}/></div>
+      </div>
+      <div className="row2">
+        <div className="field"><label>Giới tính</label>
+          <select value={form.gioitinh||'Nam'} onChange={e=>set('gioitinh',e.target.value)}><option>Nam</option><option>Nữ</option></select>
+        </div>
+        <div className="field"><label>Ngày sinh</label><input value={form.ngaysinh||''} placeholder="dd/mm/yyyy" onChange={e=>set('ngaysinh',e.target.value)}/></div>
+      </div>
+      <div className="field"><label>SĐT liên hệ</label><input value={form.sdt||''} onChange={e=>set('sdt',e.target.value)}/></div>
+      <div className="row2">
+        <div className="field"><label>Họ tên cha</label><input value={form.tencha||''} onChange={e=>set('tencha',e.target.value)}/></div>
+        <div className="field"><label>SĐT cha</label><input value={form.sdtcha||''} onChange={e=>set('sdtcha',e.target.value)}/></div>
+      </div>
+      <div className="row2">
+        <div className="field"><label>Họ tên mẹ</label><input value={form.tenme||''} onChange={e=>set('tenme',e.target.value)}/></div>
+        <div className="field"><label>SĐT mẹ</label><input value={form.sdtme||''} onChange={e=>set('sdtme',e.target.value)}/></div>
+      </div>
+      <div className="field"><label>Chức vụ cán bộ lớp</label>
+        <select value={form.chucvu||''} onChange={e=>set('chucvu',e.target.value)}>
+          <option value="">— Học sinh thường —</option>
+          <option value="lop_truong">Lớp trưởng</option>
+          <option value="bi_thu">Bí thư</option>
+          <option value="to_truong">Tổ trưởng</option>
+        </select>
+      </div>
+      <div className="field"><label>Dân tộc</label><input value={form.dantoc||''} onChange={e=>set('dantoc',e.target.value)}/></div>
+      <div className="field"><label>Trạng thái</label><input value={form.trangthai||'Đang học'} onChange={e=>set('trangthai',e.target.value)}/></div>
+      {err && <div className="err">{err}</div>}
+      <div className="actions"><button className="btn sec" onClick={onClose}>Huỷ</button><button className="btn" onClick={()=>onSave(form)}>Lưu</button></div>
+    </>;
+  } else if(modal.type==='viewStudent'){
+    const s=modal.data;
+    body = <>
+      <h3>{s.ten}</h3>
+      <p className="muted">Mã: {s.ma} · Tổ {s.to??'-'} · {s.gioitinh||''} · Sinh {s.ngaysinh||''} · SĐT {s.sdt||'-'}</p>
+      <p className="muted">Cha: {s.tencha||'-'} ({s.sdtcha||'-'}) · Mẹ: {s.tenme||'-'} ({s.sdtme||'-'})</p>
+      <p><span className="score">{modal.total}</span></p>
+      <div className="tbl-wrap" style={{maxHeight:260}}><table><thead><tr><th>Ngày</th><th>Nội dung</th><th>Điểm</th></tr></thead><tbody>
+        {modal.myV.length? modal.myV.map(v=><tr key={v.id}><td>{viDate(v.date)}</td><td>{v.text}</td><td>{v.diem>0?'+':''}{v.diem}</td></tr>) : <tr><td colSpan="3" className="muted">Chưa có ghi nhận</td></tr>}
+      </tbody></table></div>
+      <div className="actions">
+        {modal.canEdit && <button className="btn sec" onClick={()=>onSave({__editProfile:true})}>Sửa hồ sơ</button>}
+        <button className="btn sec" onClick={onClose}>Đóng</button>
+      </div>
+    </>;
+  } else if(modal.type==='confirmDel'){
+    body = <>
+      <h3>Xoá học sinh?</h3>
+      <p className="muted">{modal.data.ten} sẽ bị xoá khỏi danh sách. Thao tác không thể hoàn tác.</p>
+      <div className="actions"><button className="btn sec" onClick={onClose}>Huỷ</button><button className="btn danger" onClick={()=>onSave(null)}>Xoá</button></div>
+    </>;
+  }
+  return <div className="overlay" onMouseDown={e=>{if(e.target.className==='overlay') onClose();}}><div className="modal">{body}</div></div>;
+}
+
+function App(){
+  const [db,setDb] = useState(null);
+  const [session,setSession] = useState(loadSession());
+  const [students,setStudents] = useState([]);
+  const [violations,setViolations] = useState([]);
+  const [attendance,setAttendance] = useState([]);
+  const [tab,setTab] = useState('list');
+  const [tdView,setTdView] = useState('week');
+  const [tkView,setTkView] = useState('month');
+  const [modal,setModal] = useState(null);
+  const [err,setErr] = useState('');
+
+  useEffect(()=>{
+    (async ()=>{
+      const d = firebase.firestore();
+      const meta = await d.doc('meta/seed').get();
+      if(!meta.exists || !meta.data() || !meta.data().done){
+        for(const s of SEED_STUDENTS){ await d.doc('students/'+s.ma).set(s); }
+        await d.doc('meta/seed').set({done:true, at:Date.now()});
+      }
+      const bf = await d.doc('meta/backfill_profile_v1').get();
+      if(!bf.exists){
+        for(const s of SEED_STUDENTS){
+          try{ await d.doc('students/'+s.ma).update({tencha:s.tencha, tenme:s.tenme, sdtcha:s.sdtcha, sdtme:s.sdtme}); }catch(e){}
+        }
+        await d.doc('meta/backfill_profile_v1').set({done:true, at:Date.now()});
+      }
+      const bf2 = await d.doc('meta/backfill_profile_v2').get();
+      if(!bf2.exists){
+        for(const s of SEED_STUDENTS){
+          try{ await d.doc('students/'+s.ma).update({pw_hs:s.pw_hs, pw_ph:s.pw_ph}); }catch(e){}
+        }
+        await d.doc('meta/backfill_profile_v2').set({done:true, at:Date.now()});
+      }
+      setDb(d);
+    })();
+  },[]);
+
+  async function refresh(d){
+    const dd = d||db;
+    const [ss,vs,as] = await Promise.all([dd.collection('students').get(), dd.collection('violations').get(), dd.collection('attendance').get()]);
+    setStudents(ss.docs.map(x=>x.data()).sort((a,b)=>a.stt-b.stt));
+    setViolations(vs.docs.map(x=>({id:x.id,...x.data()})).sort((a,b)=>(b.at||0)-(a.at||0)));
+    setAttendance(as.docs.map(x=>x.data()));
+  }
+
+  useEffect(()=>{ if(db) refresh(db); }, [db]);
+
+  function login(s){ setSession(s); saveSession(s); }
+  function logout(){ setSession(null); saveSession(null); }
+
+  async function handleSave(form){
+    setErr('');
+    if(modal.type==='logViolation'){
+      if(!form.text || isNaN(form.diem)){ setErr('Vui lòng nhập nội dung và điểm hợp lệ.'); return; }
+      if(modal.edit){
+        await db.doc('violations/'+modal.edit.id).set({ma:modal.student.ma, text:form.text, diem:form.diem, date:form.date, note:form.note, by:session.role, at:modal.edit.at||Date.now()});
+      } else {
+        await db.collection('violations').add({ma:modal.student.ma, text:form.text, diem:form.diem, date:form.date, note:form.note, by:session.role, at:Date.now()});
+      }
+      setModal(null); await refresh();
+    } else if(modal.type==='editStudent'){
+      if(!form.ten || !form.ma){ setErr('Vui lòng nhập họ tên và mã định danh.'); return; }
+      const data={...form, stt: (modal.data&&modal.data.stt) || (students.length+1)};
+      await db.doc('students/'+form.ma).set(data);
+      setModal(null); await refresh();
+    } else if(modal.type==='confirmDel'){
+      await db.doc('students/'+modal.data.ma).delete();
+      setModal(null); await refresh();
+    } else if(modal.type==='viewStudent' && form && form.__editProfile){
+      setModal({type:'editStudent', ma:modal.data.ma, data:modal.data});
+    }
+  }
+  async function delViolation(id){ await db.doc('violations/'+id).delete(); await refresh(); }
+  async function quickChucvu(ma, chucvu){ await db.doc('students/'+ma).update({chucvu}); await refresh(); }
+
+  if(!db) return <div className="wrap"><p className="muted">Đang tải…</p></div>;
+  if(!session) return <Login db={db} onLogin={login}/>;
+
+  const me = session.ma ? students.find(s=>s.ma===session.ma) : null;
+  const meChucvu = me ? me.chucvu : null;
+  const restrictToTo = session.role==='cb' && meChucvu==='to_truong';
+  const roleLabel = session.role==='admin'?'Giáo viên chủ nhiệm': session.role==='cb'?(CV_LABEL[meChucvu]||'Cán bộ lớp'): session.role==='ph'?'Phụ huynh':'Học sinh';
+  const canEditRoster = session.role==='admin';
+  const canLog = session.role==='admin' || session.role==='cb';
+  const scopedStudents = restrictToTo ? students.filter(s=>s.to===me.to) : students;
+  const scopedMas = new Set(scopedStudents.map(s=>s.ma));
+  const scopedViolations = restrictToTo ? violations.filter(v=>scopedMas.has(v.ma)) : violations;
+
+  return (
+    <div>
+      <div className="top">
+        <div className="brand">CSDL Lớp 11A2</div>
+        <div className="who">{roleLabel}{me?' · '+me.ten:''}{restrictToTo?' · Tổ '+me.to:''} <button onClick={logout}>Đăng xuất</button></div>
+      </div>
+      <div className="wrap">
+        {(session.role==='hs' || session.role==='ph') ? (
+          me ? <><StudentSelf s={me} violations={violations} attendance={attendance}/><ThiDuaTab students={students} violations={violations} view="week" canLog={false}/></> : <p>Không tìm thấy thông tin.</p>
+        ) : (
+          <>
+            <div className="tabs">
+              <div className={"tab "+(tab==='list'?'active':'')} onClick={()=>setTab('list')}>📋 1. Hồ sơ học sinh</div>
+              {canLog && <div className={"tab "+(tab==='att'?'active':'')} onClick={()=>setTab('att')}>✅ 2. Điểm danh</div>}
+              <div className={"tab "+(tab==='td'?'active':'')} onClick={()=>setTab('td')}>🏆 3. Thi đua</div>
+              <div className={"tab "+(tab==='tk'?'active':'')} onClick={()=>setTab('tk')}>📊 4. Tổng kết</div>
+            </div>
+            {tab==='td' && <div className="tabs sub">
+              <div className={"tab "+(tdView==='week'?'active':'')} onClick={()=>setTdView('week')}>📝 3.1 Nhập thi đua theo tuần</div>
+              <div className={"tab "+(tdView==='month'?'active':'')} onClick={()=>setTdView('month')}>📅 3.2 Tổng kết thi đua tháng</div>
+            </div>}
+            {tab==='tk' && <div className="tabs sub">
+              <div className={"tab "+(tkView==='month'?'active':'')} onClick={()=>setTkView('month')}>🗓️ 4.1 Tổng kết theo tháng</div>
+              <div className={"tab "+(tkView==='sem'?'active':'')} onClick={()=>setTkView('sem')}>🎓 4.2 Tổng kết học kỳ</div>
+            </div>}
+            {tab==='list' &&
+              <Roster students={scopedStudents} canEditRoster={canEditRoster} db={db} onImported={refresh}
+                  onAdd={()=>{setErr('');setModal({type:'editStudent',ma:null,data:{}});}}
+                  onEdit={s=>{setErr('');setModal({type:'editStudent',ma:s.ma,data:s});}}
+                  onDel={s=>{setErr('');setModal({type:'confirmDel',data:s});}}
+                  onView={s=>{setErr('');setModal({type:'viewStudent',data:s,total:totalOf(s.ma,violations),myV:violations.filter(v=>v.ma===s.ma),canEdit:canEditRoster});}}
+                  onQuickChucvu={quickChucvu}
+                />
+            }
+            {tab==='att' && canLog && <AttendanceTab db={db} students={scopedStudents} attendance={attendance} session={session} onSaved={refresh}/>}
+            {tab==='td' && <ThiDuaTab students={scopedStudents} violations={violations} canLog={canLog} scopedMas={scopedMas} view={tdView}
+                onAdd={(s,defDate)=>{setErr('');setModal({type:'logViolation',student:s,defaultDate:defDate});}}
+                onEditEntry={(v,s)=>{setErr('');setModal({type:'logViolation',student:s||{ten:v.ma,ma:v.ma},edit:v});}}
+                onDelEntry={delViolation}
+              />}
+            {tab==='tk' && <SummaryTab students={scopedStudents} violations={violations} attendance={attendance} view={tkView}/>}
+          </>
+        )}
+      </div>
+      <Modal modal={modal} err={err} onClose={()=>{setModal(null); setErr('');}} onSave={handleSave}/>
+    </div>
+  );
+}
+
+function Roster({students, canEditRoster, onAdd, onEdit, onDel, onView, onQuickChucvu, db, onImported}){
+  const [q,setQ] = useState('');
+  const [importing,setImporting] = useState(false);
+  const fileRef = useState(()=>({current:null}))[0];
+  const filtered = useMemo(()=>{
+    const k = q.trim().toLowerCase();
+    if(!k) return students;
+    return students.filter(s=>(s.ten||'').toLowerCase().includes(k) || (s.ma||'').includes(k) || String(s.to||'').includes(k));
+  }, [students, q]);
+
+  function exportExcel(){
+    const rows = filtered.map(s=>({
+      'STT': s.stt, 'Mã định danh': s.ma, 'Họ và tên': s.ten, 'Ngày sinh': s.ngaysinh, 'Giới tính': s.gioitinh,
+      'Tổ': s.to, 'SĐT liên hệ': s.sdt, 'Chức vụ': CV_LABEL[s.chucvu]||'', 'Dân tộc': s.dantoc, 'Trạng thái': s.trangthai
+    }));
+    exportXlsx(rows, 'ho_so_hoc_sinh_11A2.xlsx', 'Ho so');
+  }
+
+  async function handleFile(e){
+    const file = e.target.files[0]; if(!file) return;
+    setImporting(true);
+    try{ await importStudentsXlsx(file, db, onImported); } finally { setImporting(false); e.target.value=''; }
+  }
+
+  return (
+    <div className="card">
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',gap:10}}>
+        <h3>Hồ sơ học sinh ({filtered.length}/{students.length})</h3>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+          <input placeholder="🔍 Tìm tên, mã, tổ…" style={{width:'100%',maxWidth:220,minWidth:140}} value={q} onChange={e=>setQ(e.target.value)}/>
+          <button className="btn sec" onClick={exportExcel}>⬇️ Xuất Excel</button>
+          {canEditRoster && <>
+            <input ref={el=>fileRef.current=el} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={handleFile}/>
+            <button className="btn sec" disabled={importing} onClick={()=>fileRef.current.click()}>{importing?'Đang nhập…':'⬆️ Nhập Excel'}</button>
+            <button className="btn" onClick={onAdd}>+ Thêm học sinh</button>
+          </>}
+        </div>
+      </div>
+      <div className="tbl-wrap"><table>
+        <thead><tr><th>STT</th><th>Họ tên</th><th>Ngày sinh</th><th>Giới tính</th><th>Tổ</th><th>SĐT liên hệ</th><th>Chức vụ</th><th>Thao tác</th></tr></thead>
+        <tbody>
+          {filtered.map(s=>{
+            return <tr key={s.ma}>
+              <td>{s.stt}</td>
+              <td>{s.ten}</td>
+              <td>{s.ngaysinh||'-'}</td>
+              <td>{s.gioitinh||'-'}</td>
+              <td>Tổ {s.to??'-'}</td>
+              <td>{s.sdt||'-'}</td>
+              <td>
+                {canEditRoster ? (
+                  <select style={{width:'auto'}} value={s.chucvu||''} onChange={e=>onQuickChucvu(s.ma, e.target.value)}>
+                    <option value="">—</option>
+                    <option value="lop_truong">Lớp trưởng</option>
+                    <option value="bi_thu">Bí thư</option>
+                    <option value="to_truong">Tổ trưởng</option>
+                  </select>
+                ) : (s.chucvu ? <span className="pill mid">{CV_LABEL[s.chucvu]}</span> : '-')}
+              </td>
+              <td style={{whiteSpace:'nowrap'}}>
+                {canEditRoster && <><button className="link" onClick={()=>onEdit(s)}>Sửa</button> · <button className="link" onClick={()=>onDel(s)}>Xoá</button> · </>}
+                <button className="link" onClick={()=>onView(s)}>Xem</button>
+              </td>
+            </tr>;
+          })}
+        </tbody>
+      </table></div>
+    </div>
+  );
+}
+
+function AttendanceTab({db, students, attendance, session, onSaved}){
+  const [date,setDate] = useState(new Date().toISOString().slice(0,10));
+  const dayMap = useMemo(()=>{
+    const m = {};
+    attendance.filter(a=>a.date===date).forEach(a=>{ m[a.ma]=a.status; });
+    return m;
+  }, [attendance, date]);
+  const [draft,setDraft] = useState({});
+  useEffect(()=>{ setDraft({...dayMap}); }, [date]);
+  const [saving,setSaving] = useState(false);
+
+  function statusOf(ma){ return draft[ma] ?? dayMap[ma] ?? 'present'; }
+  function setStatus(ma, code){ setDraft(d=>({...d, [ma]:code})); }
+
+  async function save(){
+    setSaving(true);
+    const entries = students.map(s=>({ma:s.ma, status:statusOf(s.ma)}));
+    await Promise.all(entries.map(e=>db.doc('attendance/'+date+'_'+e.ma).set({ma:e.ma, date, status:e.status, by:session.role, at:Date.now()})));
+    setSaving(false);
+    await onSaved();
+  }
+
+  return (
+    <div className="card">
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+        <h3>Điểm danh chuyên cần — {viDate(date)}</h3>
+        <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+          <input type="date" style={{width:'auto'}} value={date} onChange={e=>setDate(e.target.value)}/>
+          <button className="btn sec" onClick={()=>exportXlsx(students.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Trạng thái':attInfo(statusOf(s.ma)).label})), 'diem_danh_'+date+'.xlsx', 'Diem danh')}>⬇️ Xuất Excel</button>
+          <button className="btn" onClick={save} disabled={saving}>{saving?'Đang lưu…':'Lưu điểm danh'}</button>
+        </div>
+      </div>
+      <div className="tbl-wrap"><table>
+        <thead><tr><th>STT</th><th>Họ tên</th><th>Tổ</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          {students.map(s=>{
+            const cur = statusOf(s.ma);
+            return <tr key={s.ma}>
+              <td>{s.stt}</td><td>{s.ten}</td><td>Tổ {s.to??'-'}</td>
+              <td>
+                <select value={cur} onChange={e=>setStatus(s.ma, e.target.value)}>
+                  {ATT_STATUS.map(a=><option key={a.code} value={a.code}>{a.label}</option>)}
+                </select>
+              </td>
+            </tr>;
+          })}
+        </tbody>
+      </table></div>
+    </div>
+  );
+}
+
+function ThiDuaTab({students, violations, canLog, scopedMas, view, onAdd, onEditEntry, onDelEntry}){
+  const now = new Date();
+  const defMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const [month,setMonth] = useState(defMonth);
+  const [week,setWeek] = useState(monthWeekOf(now.toISOString().slice(0,10)).week);
+  const canEdit = ma => canLog && scopedMas && scopedMas.has(ma);
+
+  const weekRows = useMemo(()=>{
+    const list = students.map(s=>({...s, score: weekScore(s.ma, month, week, violations)}));
+    return withRank(list,'score');
+  }, [students, violations, month, week]);
+
+  const weekEntries = useMemo(()=>{
+    return violations.filter(v=>{ const w=monthWeekOf(v.date); return w && w.month===month && w.week===week && (!scopedMas || scopedMas.has(v.ma)); });
+  }, [violations, month, week, scopedMas]);
+
+  const monthRows = useMemo(()=>{
+    const list = students.map(s=>{
+      const w = [1,2,3,4].map(n=>weekScore(s.ma, month, n, violations));
+      const avg = w.reduce((a,b)=>a+b,0)/4;
+      return {...s, w1:w[0], w2:w[1], w3:w[2], w4:w[3], avg};
+    });
+    return withRank(list,'avg');
+  }, [students, violations, month]);
+
+  const toRows = useMemo(()=>{
+    const groups = {};
+    monthRows.forEach(s=>{ const k=s.to??'-'; (groups[k]=groups[k]||[]).push(s.avg); });
+    const list = Object.entries(groups).map(([to,arr])=>({to, avg: arr.reduce((a,b)=>a+b,0)/arr.length}));
+    return withRank(list,'avg');
+  }, [monthRows]);
+
+  return (
+    <div className="card">
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+        <h3>{view==='week'?'Nhập thi đua theo tuần':'Tổng kết thi đua tháng'} — {viMonth(month)}</h3>
+        <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+          <input type="month" style={{width:'auto'}} value={month} onChange={e=>setMonth(e.target.value)}/>
+          {view==='week' && <select style={{width:'auto'}} value={week} onChange={e=>setWeek(parseInt(e.target.value,10))}>
+            {[1,2,3,4].map(n=><option key={n} value={n}>Tuần {n}</option>)}
+          </select>}
+          <button className="btn sec" onClick={()=>{
+            if(view==='week') exportXlsx(weekRows.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Điểm tuần':s.score,'Xếp loại':xlRank(s.score).label,'Hạng':s.rank})), 'thi_dua_tuan'+week+'_'+month+'.xlsx', 'Tuan '+week);
+            else exportXlsx(monthRows.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Tuần 1':s.w1,'Tuần 2':s.w2,'Tuần 3':s.w3,'Tuần 4':s.w4,'TB tháng':s.avg.toFixed(1),'Xếp loại':xlRank(s.avg).label,'Hạng':s.rank})), 'thi_dua_thang_'+month+'.xlsx', 'Thang');
+          }}>⬇️ Xuất Excel</button>
+        </div>
+      </div>
+
+      {view==='week' ? (
+        <>
+        <div className="tbl-wrap"><table>
+          <thead><tr><th>STT</th><th>Họ tên</th><th>Tổ</th><th>Điểm tuần</th><th>Xếp loại</th><th>Hạng</th>{canLog && <th>Thao tác</th>}</tr></thead>
+          <tbody>{weekRows.map(s=>{ const r=xlRank(s.score); const wkDay=(week-1)*7+1; const defDate=month+'-'+String(wkDay).padStart(2,'0'); return <tr key={s.ma}>
+            <td>{s.stt}</td><td>{s.ten}</td><td>Tổ {s.to??'-'}</td><td>{s.score}</td><td><span className={"pill "+r.cls}>{r.label}</span></td><td><b>{s.rank}</b></td>
+            {canLog && <td>{canEdit(s.ma) && <button className="link" onClick={()=>onAdd(s,defDate)}>+ Ghi nề nếp</button>}</td>}
+          </tr>; })}</tbody>
+        </table></div>
+        {canLog && <>
+          <h3 style={{marginTop:18}}>Các ghi nhận trong tuần {week}</h3>
+          <div className="tbl-wrap"><table>
+            <thead><tr><th>Ngày</th><th>Học sinh</th><th>Nội dung</th><th>Điểm</th><th>Ghi chú</th><th>Thao tác</th></tr></thead>
+            <tbody>{weekEntries.length? weekEntries.map(v=>{ const st=students.find(x=>x.ma===v.ma); return <tr key={v.id}>
+              <td>{viDate(v.date)}</td><td>{st?st.ten:v.ma}</td><td>{v.text}</td>
+              <td style={{color:v.diem<0?'var(--bad)':'var(--good)'}}>{v.diem>0?'+':''}{v.diem}</td><td className="muted">{v.note||''}</td>
+              <td><button className="link" onClick={()=>onEditEntry(v,st)}>Sửa</button> · <button className="link" onClick={()=>onDelEntry(v.id)}>Xoá</button></td>
+            </tr>; }) : <tr><td colSpan="6" className="muted">Chưa có ghi nhận nào trong tuần này.</td></tr>}</tbody>
+          </table></div>
+        </>}
+        </>
+      ) : (
+        <>
+        <div className="tbl-wrap"><table>
+          <thead><tr><th>STT</th><th>Họ tên</th><th>Tổ</th><th>Tuần 1</th><th>Tuần 2</th><th>Tuần 3</th><th>Tuần 4</th><th>TB tháng</th><th>Xếp loại</th><th>Hạng</th></tr></thead>
+          <tbody>{monthRows.map(s=>{ const r=xlRank(s.avg); return <tr key={s.ma}>
+            <td>{s.stt}</td><td>{s.ten}</td><td>Tổ {s.to??'-'}</td><td>{s.w1}</td><td>{s.w2}</td><td>{s.w3}</td><td>{s.w4}</td>
+            <td><b>{s.avg.toFixed(1)}</b></td><td><span className={"pill "+r.cls}>{r.label}</span></td><td><b>{s.rank}</b></td>
+          </tr>; })}</tbody>
+        </table></div>
+        <h3 style={{marginTop:18}}>Xếp hạng theo tổ</h3>
+        <div className="tbl-wrap"><table>
+          <thead><tr><th>Tổ</th><th>Điểm TB tổ</th><th>Hạng</th></tr></thead>
+          <tbody>{toRows.map(t=><tr key={t.to}><td>Tổ {t.to}</td><td>{t.avg.toFixed(1)}</td><td><b>{t.rank}</b></td></tr>)}</tbody>
+        </table></div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function SummaryTab({students, violations, attendance, view}){
+  const now = new Date();
+  const defMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const [month,setMonth] = useState(defMonth);
+  const [sem,setSem] = useState('HK1');
+
+  const attCount = (ma, months, code) => attendance.filter(a=>a.ma===ma && months.includes(monthOf(a.date)) && a.status===code).length;
+
+  const monthRows = useMemo(()=>{
+    const list = students.map(s=>{
+      const avg = monthAvg(s.ma, month, violations);
+      return {...s, avg,
+        vp: attCount(s.ma,[month],'absent_p'), vk: attCount(s.ma,[month],'absent_k'), muon: attCount(s.ma,[month],'late')};
+    });
+    return withRank(list,'avg');
+  }, [students, violations, attendance, month]);
+
+  const semRows = useMemo(()=>{
+    const months = SEMESTERS[sem];
+    const list = students.map(s=>{
+      const avgs = months.map(m=>monthAvg(s.ma,m,violations));
+      const avg = avgs.reduce((a,b)=>a+b,0)/avgs.length;
+      return {...s, avg,
+        vp: attCount(s.ma,months,'absent_p'), vk: attCount(s.ma,months,'absent_k'), muon: attCount(s.ma,months,'late')};
+    });
+    return withRank(list,'avg');
+  }, [students, violations, attendance, sem]);
+
+  const rows = view==='month' ? monthRows : semRows;
+
+  return (
+    <div className="card">
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+        <h3>{view==='month'?'Tổng kết theo tháng — '+viMonth(month):'Tổng kết học kỳ — '+(sem==='HK1'?'Học kỳ 1':'Học kỳ 2')}</h3>
+        <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+          {view==='month'
+            ? <input type="month" style={{width:'auto'}} value={month} onChange={e=>setMonth(e.target.value)}/>
+            : <select style={{width:'auto'}} value={sem} onChange={e=>setSem(e.target.value)}>
+                <option value="HK1">Học kỳ 1</option><option value="HK2">Học kỳ 2</option>
+              </select>}
+          <button className="btn sec" onClick={()=>exportXlsx(rows.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Điểm TB':s.avg.toFixed(1),'Xếp loại':xlRank(s.avg).label,'Hạng':s.rank,'Vắng phép':s.vp,'Vắng không phép':s.vk,'Đi muộn':s.muon})), (view==='month'?'tong_ket_thang_'+month:'tong_ket_'+sem)+'.xlsx', 'Tong ket')}>⬇️ Xuất Excel</button>
+        </div>
+      </div>
+      <div className="tbl-wrap"><table>
+        <thead><tr><th>STT</th><th>Họ tên</th><th>Tổ</th><th>Điểm TB</th><th>Xếp loại</th><th>Hạng</th><th>Vắng phép</th><th>Vắng không phép</th><th>Đi muộn</th></tr></thead>
+        <tbody>{rows.map(s=>{ const r=xlRank(s.avg); return <tr key={s.ma}>
+          <td>{s.stt}</td><td>{s.ten}</td><td>Tổ {s.to??'-'}</td><td><b>{s.avg.toFixed(1)}</b></td>
+          <td><span className={"pill "+r.cls}>{r.label}</span></td><td><b>{s.rank}</b></td>
+          <td>{s.vp}</td><td>{s.vk}</td><td>{s.muon}</td>
+        </tr>; })}</tbody>
+      </table></div>
+    </div>
+  );
+}
+
+function StudentSelf({s, violations, attendance}){
+  const myV = violations.filter(v=>v.ma===s.ma);
+  const t = totalOf(s.ma, violations); const r = xlRank(t);
+  const myAtt = attendance.filter(a=>a.ma===s.ma);
+  const cnt = code => myAtt.filter(a=>a.status===code).length;
+  const stats = [
+    {label:'Vắng có phép', n:cnt('absent_p'), cls:'mid'},
+    {label:'Vắng không phép', n:cnt('absent_k'), cls:'bad'},
+    {label:'Đi muộn', n:cnt('late'), cls:'mid'},
+    {label:'Có mặt', n:cnt('present'), cls:'good'},
+  ];
+  const byType = useMemo(()=>{
+    const groups = {};
+    myV.filter(v=>v.diem<0).forEach(v=>{ const k=v.text; groups[k]=groups[k]||{text:k,n:0,diem:0}; groups[k].n++; groups[k].diem+=v.diem; });
+    return Object.values(groups).sort((a,b)=>b.n-a.n);
+  }, [myV]);
+  return (
+    <>
+      <div className="card">
+        <h2>{s.ten}</h2>
+        <p className="muted">Mã định danh: {s.ma} · Tổ {s.to??'-'} · {s.gioitinh||''} · Sinh {s.ngaysinh||''}</p>
+        <div className="row2" style={{alignItems:'center',marginTop:10}}>
+          <div><div className="score">{t}</div><span className={"pill "+r.cls}>{r.label}</span></div>
+          <div className="muted">Điểm nề nếp tính từ 100, cộng/trừ theo các lượt ghi nhận bên dưới.</div>
+        </div>
+      </div>
+      <div className="card">
+        <h3>Chuyên cần</h3>
+        <div style={{display:'flex',gap:20,flexWrap:'wrap',marginTop:6}}>
+          {stats.map(x=><div key={x.label}><div className="score" style={{fontSize:24}}>{x.n}</div><span className={"pill "+x.cls}>{x.label}</span></div>)}
+        </div>
+      </div>
+      <div className="card">
+        <h3>Thống kê lỗi vi phạm</h3>
+        {byType.length ? (
+          <div className="tbl-wrap"><table>
+            <thead><tr><th>Loại lỗi</th><th>Số lần</th><th>Tổng điểm trừ</th></tr></thead>
+            <tbody>{byType.map(x=><tr key={x.text}><td>{x.text}</td><td>{x.n}</td><td style={{color:'var(--bad)'}}>{x.diem}</td></tr>)}</tbody>
+          </table></div>
+        ) : <p className="muted">Chưa vi phạm lỗi nào — rất tốt!</p>}
+      </div>
+      <div className="card">
+        <h3>Lịch sử nề nếp</h3>
+        <div className="tbl-wrap"><table>
+          <thead><tr><th>Ngày</th><th>Nội dung</th><th>Điểm</th><th>Ghi chú</th></tr></thead>
+          <tbody>
+            {myV.length ? myV.map(v=><tr key={v.id}><td>{viDate(v.date)}</td><td>{v.text}</td><td style={{color:v.diem<0?'var(--bad)':'var(--good)'}}>{v.diem>0?'+':''}{v.diem}</td><td className="muted">{v.note||''}</td></tr>)
+              : <tr><td colSpan="4" className="muted">Chưa có ghi nhận nào — điểm tuyệt đối!</td></tr>}
+          </tbody>
+        </table></div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

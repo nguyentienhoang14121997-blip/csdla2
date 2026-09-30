@@ -106,6 +106,7 @@ label{font-size:12px;color:var(--ink2);display:block;margin-bottom:3px}
 .err{color:var(--bad);font-size:12.5px;margin-top:4px}
 .actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
 .hint{font-size:12px;color:var(--ink2);margin-top:2px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--good);color:#fff;padding:11px 20px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:60;font-size:13.5px;font-weight:600;max-width:90vw;text-align:center}
 </style>
 </head>
 <body>
@@ -115,7 +116,7 @@ const {useState,useEffect,useMemo} = React;
 
 // ====== CẤU HÌNH FIREBASE — dán thông tin dự án của bạn vào đây ======
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyATNLtaLiOcPBilPsdTo0BP4FXdULMw8l4",
+  apiKey: "DÁN_apiKey",
   authDomain: "csdl11a2.firebaseapp.com",
   projectId: "csdl11a2",
   storageBucket: "csdl11a2.firebasestorage.app",
@@ -204,18 +205,27 @@ const SEED_STUDENTS = [{"stt": 1, "ma": "0117828849", "ten": "Nguyễn Đình Qu
 function xlRank(d){ if(d>=100) return {label:'Tốt',cls:'good'}; if(d>=80) return {label:'Khá',cls:'mid'}; if(d>=50) return {label:'Đạt',cls:'mid'}; return {label:'Chưa đạt',cls:'bad'}; }
 function totalOf(ma, violations){ let t=100; violations.filter(v=>v.ma===ma).forEach(v=>t+=v.diem); return t; }
 
-// Chia mỗi tháng thành 4 tuần cố định theo ngày trong tháng: 1-7, 8-14, 15-21, 22-cuối tháng
-function monthWeekOf(dateStr){
-  if(!dateStr) return null;
-  const [y,m,d] = dateStr.split('-').map(Number);
-  if(!y||!m||!d) return null;
-  const week = d<=7?1:d<=14?2:d<=21?3:4;
-  return {month: y+'-'+String(m).padStart(2,'0'), week};
+// Tuần học thực tế do GVCN cấu hình (mặc định bắt đầu 07/09), không cố định theo lịch tháng
+const DEFAULT_WEEK_START = '2026-09-07';
+function addDays(dateStr, n){ const d=new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function genDefaultWeeks(start, count){
+  const list=[]; let s=start;
+  for(let i=0;i<count;i++){ const e=addDays(s,6); list.push({start:s, end:e}); s=addDays(e,1); }
+  return list;
 }
-function weekScore(ma, monthStr, weekNum, violations){
+function weekRangeOf(n, weeks){ return (weeks && weeks[n-1]) || null; }
+function weekNumberOfDate(dateStr, weeks){
+  if(!dateStr || !weeks) return null;
+  for(let i=0;i<weeks.length;i++){ if(dateStr>=weeks[i].start && dateStr<=weeks[i].end) return i+1; }
+  return null;
+}
+function weeksStartingInMonth(monthStr, weeks){
+  const res=[]; (weeks||[]).forEach((w,i)=>{ if(w.start.slice(0,7)===monthStr) res.push(i+1); }); return res;
+}
+function weekScore(ma, weekNum, violations, weeks){
+  const r=weekRangeOf(weekNum, weeks); if(!r) return 100;
   let t=100;
-  violations.filter(v=>{ const w=monthWeekOf(v.date); return w && w.month===monthStr && w.week===weekNum && v.ma===ma; })
-    .forEach(v=>t+=v.diem);
+  violations.filter(v=>v.ma===ma && v.date>=r.start && v.date<=r.end).forEach(v=>t+=v.diem);
   return t;
 }
 // Xếp hạng kiểu thi đấu: điểm bằng nhau thì hạng bằng nhau, hạng sau bị bỏ qua số tương ứng
@@ -230,17 +240,19 @@ const SEMESTERS = {
   HK2: ['2027-01','2027-02','2027-03','2027-04','2027-05'],
 };
 function monthOf(dateStr){ return dateStr ? dateStr.slice(0,7) : null; }
-function monthAvg(ma, monthStr, violations){
-  const w=[1,2,3,4].map(n=>weekScore(ma,monthStr,n,violations));
-  return w.reduce((a,b)=>a+b,0)/4;
+function monthAvg(ma, monthStr, violations, weeks){
+  const ns = weeksStartingInMonth(monthStr, weeks);
+  if(!ns.length) return 100;
+  const scores = ns.map(n=>weekScore(ma,n,violations,weeks));
+  return scores.reduce((a,b)=>a+b,0)/scores.length;
 }
 function prevMonthStr(ym){ let [y,m]=ym.split('-').map(Number); m--; if(m===0){ m=12; y--; } return y+'-'+String(m).padStart(2,'0'); }
 // Xếp hạng của tháng liền trước (null nếu là tháng 9 hoặc chưa có dữ liệu để so sánh)
-function prevRanks(students, month, violations){
+function prevRanks(students, month, violations, weeks){
   if(!month || parseInt(month.split('-')[1],10)===9) return null;
   const prev = prevMonthStr(month);
   if(!violations.some(v=>monthOf(v.date)===prev) || !violations.some(v=>monthOf(v.date)===month)) return null;
-  const list = students.map(s=>({ma:s.ma, avg:monthAvg(s.ma, prev, violations)}));
+  const list = students.map(s=>({ma:s.ma, avg:monthAvg(s.ma, prev, violations, weeks)}));
   const map = {}; withRank(list,'avg').forEach(x=>{ map[x.ma]=x.rank; });
   return map;
 }
@@ -337,7 +349,13 @@ function Modal({modal, onClose, onSave, err}){
     : modal && modal.type==='editStudent' ? {...modal.data} : {});
   const [sp1,setSp1] = useState(false);
   const [sp2,setSp2] = useState(false);
+  const [saving,setSaving] = useState(false);
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  async function doSave(payload){
+    if(saving) return;
+    setSaving(true);
+    try{ await onSave(payload); } finally { setSaving(false); }
+  }
   if(!modal) return null;
 
   let body=null;
@@ -357,7 +375,7 @@ function Modal({modal, onClose, onSave, err}){
       </div>
       <div className="field"><label>Ghi chú (không bắt buộc)</label><input value={form.note} onChange={e=>set('note',e.target.value)}/></div>
       {err && <div className="err">{err}</div>}
-      <div className="actions"><button className="btn sec" onClick={onClose}>Huỷ</button><button className="btn" onClick={()=>onSave(form)}>Lưu</button></div>
+      <div className="actions"><button className="btn sec" onClick={onClose} disabled={saving}>Huỷ</button><button className="btn" onClick={()=>doSave(form)} disabled={saving}>{saving?'Đang lưu…':'Lưu'}</button></div>
     </>;
   } else if(modal.type==='editStudent'){
     body = <>
@@ -393,7 +411,7 @@ function Modal({modal, onClose, onSave, err}){
       <div className="field"><label>Dân tộc</label><input value={form.dantoc||''} onChange={e=>set('dantoc',e.target.value)}/></div>
       <div className="field"><label>Trạng thái</label><input value={form.trangthai||'Đang học'} onChange={e=>set('trangthai',e.target.value)}/></div>
       {err && <div className="err">{err}</div>}
-      <div className="actions"><button className="btn sec" onClick={onClose}>Huỷ</button><button className="btn" onClick={()=>onSave(form)}>Lưu</button></div>
+      <div className="actions"><button className="btn sec" onClick={onClose} disabled={saving}>Huỷ</button><button className="btn" onClick={()=>doSave(form)} disabled={saving}>{saving?'Đang lưu…':'Lưu'}</button></div>
     </>;
   } else if(modal.type==='viewStudent'){
     const s=modal.data;
@@ -406,7 +424,7 @@ function Modal({modal, onClose, onSave, err}){
         {modal.myV.length? modal.myV.map(v=><tr key={v.id}><td>{viDate(v.date)}</td><td>{v.text}</td><td>{v.diem>0?'+':''}{v.diem}</td></tr>) : <tr><td colSpan="3" className="muted">Chưa có ghi nhận</td></tr>}
       </tbody></table></div>
       <div className="actions">
-        {modal.canEdit && <button className="btn sec" onClick={()=>onSave({__editProfile:true})}>Sửa hồ sơ</button>}
+        {modal.canEdit && <button className="btn sec" onClick={()=>doSave({__editProfile:true})} disabled={saving}>Sửa hồ sơ</button>}
         <button className="btn sec" onClick={onClose}>Đóng</button>
       </div>
     </>;
@@ -414,7 +432,7 @@ function Modal({modal, onClose, onSave, err}){
     body = <>
       <h3>Xoá học sinh?</h3>
       <p className="muted">{modal.data.ten} sẽ bị xoá khỏi danh sách. Thao tác không thể hoàn tác.</p>
-      <div className="actions"><button className="btn sec" onClick={onClose}>Huỷ</button><button className="btn danger" onClick={()=>onSave(null)}>Xoá</button></div>
+      <div className="actions"><button className="btn sec" onClick={onClose} disabled={saving}>Huỷ</button><button className="btn danger" onClick={()=>doSave(null)} disabled={saving}>{saving?'Đang xoá…':'Xoá'}</button></div>
     </>;
   } else if(modal.type==='changePassword'){
     body = <>
@@ -435,7 +453,7 @@ function Modal({modal, onClose, onSave, err}){
         </div>
       </div>
       {err && <div className="err">{err}</div>}
-      <div className="actions"><button className="btn sec" onClick={onClose}>Huỷ</button><button className="btn" onClick={()=>onSave(form)}>Đổi mật khẩu</button></div>
+      <div className="actions"><button className="btn sec" onClick={onClose} disabled={saving}>Huỷ</button><button className="btn" onClick={()=>doSave(form)} disabled={saving}>{saving?'Đang lưu…':'Đổi mật khẩu'}</button></div>
     </>;
   }
   return <div className="overlay" onMouseDown={e=>{if(e.target.className==='overlay') onClose();}}><div className="modal">{body}</div></div>;
@@ -451,9 +469,14 @@ function App(){
   const [tdView,setTdView] = useState('week');
   const [tkView,setTkView] = useState('month');
   const [modal,setModal] = useState(null);
+  const [modalSeq,setModalSeq] = useState(0);
+  function openModal(m){ setModalSeq(n=>n+1); setModal(m); }
   const [err,setErr] = useState('');
   const [nudge,setNudge] = useState(false);
-  useEffect(()=>{ if(nudge && db){ setModal({type:'changePassword', first:true}); setNudge(false); } },[nudge,db]);
+  useEffect(()=>{ if(nudge && db){ openModal({type:'changePassword', first:true}); setNudge(false); } },[nudge,db]);
+  const [weeks,setWeeks] = useState([]);
+  const [toast,setToast] = useState('');
+  function showToast(msg){ setToast(msg); setTimeout(()=>setToast(cur=>cur===msg?'':cur), 2200); }
 
   useEffect(()=>{
     (async ()=>{
@@ -477,10 +500,23 @@ function App(){
         }
         await d.doc('meta/backfill_profile_v2').set({done:true, at:Date.now()});
       }
+      const wk = await d.doc('meta/weeks').get();
+      if(!wk.exists || !wk.data() || !wk.data().list || !wk.data().list.length){
+        const list = genDefaultWeeks(DEFAULT_WEEK_START, 40);
+        await d.doc('meta/weeks').set({list});
+        setWeeks(list);
+      } else {
+        setWeeks(wk.data().list);
+      }
       setDb(d);
     })();
   },[]);
 
+  async function saveWeeks(list){
+    await db.doc('meta/weeks').set({list});
+    setWeeks(list);
+    showToast('Đã lưu cấu hình tuần học ✓');
+  }
   async function refresh(d){
     const dd = d||db;
     const [ss,vs,as] = await Promise.all([dd.collection('students').get(), dd.collection('violations').get(), dd.collection('attendance').get()]);
@@ -496,14 +532,20 @@ function App(){
 
   async function handleSave(form){
     setErr('');
+    try{
     if(modal.type==='logViolation'){
       if(!form.text || isNaN(form.diem)){ setErr('Vui lòng nhập nội dung và điểm hợp lệ.'); return; }
+      if(!form.date){ setErr('Vui lòng chọn ngày.'); return; }
       if(modal.edit){
-        await db.doc('violations/'+modal.edit.id).set({ma:modal.student.ma, text:form.text, diem:form.diem, date:form.date, note:form.note, by:session.role, at:modal.edit.at||Date.now()});
+        const updated={ma:modal.student.ma, text:form.text, diem:form.diem, date:form.date, note:form.note||'', by:session.role, at:modal.edit.at||Date.now()};
+        await db.doc('violations/'+modal.edit.id).set(updated);
+        setViolations(vs=>vs.map(v=>v.id===modal.edit.id?{id:modal.edit.id,...updated}:v));
       } else {
-        await db.collection('violations').add({ma:modal.student.ma, text:form.text, diem:form.diem, date:form.date, note:form.note, by:session.role, at:Date.now()});
+        const payload={ma:modal.student.ma, text:form.text, diem:form.diem, date:form.date, note:form.note||'', by:session.role, at:Date.now()};
+        const ref = await db.collection('violations').add(payload);
+        setViolations(vs=>[{id:ref.id, ...payload}, ...vs]);
       }
-      setModal(null); await refresh();
+      setModal(null); showToast('Đã lưu ✓ '+modal.student.ten+' — '+(form.diem>0?'+':'')+form.diem+' điểm');
     } else if(modal.type==='editStudent'){
       if(!form.ten || !form.ma){ setErr('Vui lòng nhập họ tên và mã định danh.'); return; }
       const data={...form, stt: (modal.data&&modal.data.stt) || (students.length+1)};
@@ -513,7 +555,7 @@ function App(){
       await db.doc('students/'+modal.data.ma).delete();
       setModal(null); await refresh();
     } else if(modal.type==='viewStudent' && form && form.__editProfile){
-      setModal({type:'editStudent', ma:modal.data.ma, data:modal.data});
+      openModal({type:'editStudent', ma:modal.data.ma, data:modal.data});
     } else if(modal.type==='changePassword'){
       if(!form.next || form.next.length<4){ setErr('Mật khẩu mới phải có ít nhất 4 ký tự.'); return; }
       if(!/\p{Lu}/u.test(form.next)){ setErr('Mật khẩu mới phải có ít nhất 1 chữ cái viết in hoa.'); return; }
@@ -532,8 +574,11 @@ function App(){
       }
       setModal(null); await refresh(); alert('Đổi mật khẩu thành công!');
     }
+    } catch(e){
+      setErr('Không lưu được, vui lòng kiểm tra kết nối mạng và thử lại. ('+(e&&e.message?e.message:'lỗi không rõ')+')');
+    }
   }
-  async function delViolation(id){ await db.doc('violations/'+id).delete(); await refresh(); }
+  async function delViolation(id){ await db.doc('violations/'+id).delete(); setViolations(vs=>vs.filter(v=>v.id!==id)); showToast('Đã xoá ghi nhận ✓'); }
   async function quickChucvu(ma, chucvu){ await db.doc('students/'+ma).update({chucvu}); await refresh(); }
 
   if(!db) return <div className="wrap"><p className="muted">Đang tải…</p></div>;
@@ -553,11 +598,11 @@ function App(){
     <div>
       <div className="top">
         <div className="brand">CSDL Lớp 11A2</div>
-        <div className="who">{roleLabel}{me?' · '+me.ten:''}{restrictToTo?' · Tổ '+me.to:''} <button onClick={()=>{setErr('');setModal({type:'changePassword'});}}>🔑 Đổi MK</button> <button onClick={logout}>Đăng xuất</button></div>
+        <div className="who">{roleLabel}{me?' · '+me.ten:''}{restrictToTo?' · Tổ '+me.to:''} <button onClick={()=>{setErr('');openModal({type:'changePassword'});}}>🔑 Đổi MK</button> <button onClick={logout}>Đăng xuất</button></div>
       </div>
       <div className="wrap">
         {(session.role==='hs' || session.role==='ph') ? (
-          me ? <><StudentSelf s={me} violations={violations} attendance={attendance}/><ThiDuaTab students={students} violations={violations} view="week" canLog={false}/></> : <p>Không tìm thấy thông tin.</p>
+          me ? <><StudentSelf s={me} violations={violations} attendance={attendance}/><ThiDuaTab students={students} violations={violations} view="week" canLog={false} weeks={weeks} isAdmin={false}/></> : <p>Không tìm thấy thông tin.</p>
         ) : (
           <>
             <div className="tabs">
@@ -577,25 +622,26 @@ function App(){
             </div>}
             {tab==='list' &&
               <Roster students={scopedStudents} canEditRoster={canEditRoster} db={db} onImported={refresh}
-                  onAdd={()=>{setErr('');setModal({type:'editStudent',ma:null,data:{}});}}
-                  onEdit={s=>{setErr('');setModal({type:'editStudent',ma:s.ma,data:s});}}
-                  onDel={s=>{setErr('');setModal({type:'confirmDel',data:s});}}
-                  onView={s=>{setErr('');setModal({type:'viewStudent',data:s,total:totalOf(s.ma,violations),myV:violations.filter(v=>v.ma===s.ma),canEdit:canEditRoster});}}
+                  onAdd={()=>{setErr('');openModal({type:'editStudent',ma:null,data:{}});}}
+                  onEdit={s=>{setErr('');openModal({type:'editStudent',ma:s.ma,data:s});}}
+                  onDel={s=>{setErr('');openModal({type:'confirmDel',data:s});}}
+                  onView={s=>{setErr('');openModal({type:'viewStudent',data:s,total:totalOf(s.ma,violations),myV:violations.filter(v=>v.ma===s.ma),canEdit:canEditRoster});}}
                   onQuickChucvu={quickChucvu}
                 />
             }
             {tab==='att' && canLog && <AttendanceTab db={db} students={scopedStudents} attendance={attendance} session={session} onSaved={refresh}/>}
-            {tab==='td' && <ThiDuaTab students={scopedStudents} violations={violations} canLog={canLog} scopedMas={scopedMas} view={tdView}
-                onAdd={(s,defDate)=>{setErr('');setModal({type:'logViolation',student:s,defaultDate:defDate});}}
-                onEditEntry={(v,s)=>{setErr('');setModal({type:'logViolation',student:s||{ten:v.ma,ma:v.ma},edit:v});}}
+            {tab==='td' && <ThiDuaTab students={scopedStudents} violations={violations} canLog={canLog} scopedMas={scopedMas} view={tdView} weeks={weeks} isAdmin={canEditRoster} onSaveWeeks={saveWeeks}
+                onAdd={(s,defDate)=>{setErr('');openModal({type:'logViolation',student:s,defaultDate:defDate});}}
+                onEditEntry={(v,s)=>{setErr('');openModal({type:'logViolation',student:s||{ten:v.ma,ma:v.ma},edit:v});}}
                 onDelEntry={delViolation}
               />}
-            {tab==='tk' && <SummaryTab students={scopedStudents} violations={violations} attendance={attendance} view={tkView}/>}
+            {tab==='tk' && <SummaryTab students={scopedStudents} violations={violations} attendance={attendance} view={tkView} weeks={weeks}/>}
             {tab==='acc' && canEditRoster && <AccountsTab students={students} db={db} onSaved={refresh}/>}
           </>
         )}
       </div>
-      <Modal modal={modal} err={err} onClose={()=>{setModal(null); setErr('');}} onSave={handleSave}/>
+      <Modal key={modalSeq} modal={modal} err={err} onClose={()=>{setModal(null); setErr('');}} onSave={handleSave}/>
+      {toast && <div className="toast">{toast}</div>}
     </div>
   );
 }
@@ -685,12 +731,23 @@ function AttendanceTab({db, students, attendance, session, onSaved}){
   function statusOf(ma){ return draft[ma] ?? dayMap[ma] ?? 'present'; }
   function setStatus(ma, code){ setDraft(d=>({...d, [ma]:code})); }
 
+  const [attErr,setAttErr] = useState('');
+  const [q,setQ] = useState('');
+  const filtered = useMemo(()=>{
+    const k=q.trim().toLowerCase();
+    return k ? students.filter(s=>(s.ten||'').toLowerCase().includes(k)) : students;
+  }, [students, q]);
   async function save(){
-    setSaving(true);
-    const entries = students.map(s=>({ma:s.ma, status:statusOf(s.ma)}));
-    await Promise.all(entries.map(e=>db.doc('attendance/'+date+'_'+e.ma).set({ma:e.ma, date, status:e.status, by:session.role, at:Date.now()})));
-    setSaving(false);
-    await onSaved();
+    setSaving(true); setAttErr('');
+    try{
+      const entries = students.map(s=>({ma:s.ma, status:statusOf(s.ma)}));
+      await Promise.all(entries.map(e=>db.doc('attendance/'+date+'_'+e.ma).set({ma:e.ma, date, status:e.status, by:session.role, at:Date.now()})));
+      await onSaved();
+    } catch(e){
+      setAttErr('Không lưu được, kiểm tra kết nối mạng và thử lại.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -698,15 +755,17 @@ function AttendanceTab({db, students, attendance, session, onSaved}){
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
         <h3>Điểm danh chuyên cần — {viDate(date)}</h3>
         <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+          <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:180,minWidth:120}} value={q} onChange={e=>setQ(e.target.value)}/>
           <input type="date" style={{width:'auto'}} value={date} onChange={e=>setDate(e.target.value)}/>
-          <button className="btn sec" onClick={()=>exportXlsx(students.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Trạng thái':attInfo(statusOf(s.ma)).label})), 'diem_danh_'+date+'.xlsx', 'Diem danh')}>⬇️ Xuất Excel</button>
+          <button className="btn sec" onClick={()=>exportXlsx(filtered.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Trạng thái':attInfo(statusOf(s.ma)).label})), 'diem_danh_'+date+'.xlsx', 'Diem danh')}>⬇️ Xuất Excel</button>
           <button className="btn" onClick={save} disabled={saving}>{saving?'Đang lưu…':'Lưu điểm danh'}</button>
         </div>
       </div>
+      {attErr && <div className="err" style={{marginBottom:8}}>{attErr}</div>}
       <div className="tbl-wrap"><table>
         <thead><tr><th>STT</th><th>Họ tên</th><th>Tổ</th><th>Trạng thái</th></tr></thead>
         <tbody>
-          {students.map(s=>{
+          {filtered.map(s=>{
             const cur = statusOf(s.ma);
             return <tr key={s.ma}>
               <td>{s.stt}</td><td>{s.ten}</td><td>Tổ {s.to??'-'}</td>
@@ -723,31 +782,73 @@ function AttendanceTab({db, students, attendance, session, onSaved}){
   );
 }
 
-function ThiDuaTab({students, violations, canLog, scopedMas, view, onAdd, onEditEntry, onDelEntry}){
+function WeekConfigEditor({weeks, onSaveWeeks}){
+  const [rows,setRows] = useState(weeks);
+  const [open,setOpen] = useState(false);
+  const [busy,setBusy] = useState(false);
+  useEffect(()=>{ setRows(weeks); }, [weeks]);
+  function setField(i,k,v){ setRows(rs=>rs.map((r,idx)=>idx===i?{...r,[k]:v}:r)); }
+  function addWeek(){
+    const last = rows[rows.length-1];
+    const s2 = last ? addDays(last.end,1) : DEFAULT_WEEK_START;
+    setRows(rs=>[...rs, {start:s2, end:addDays(s2,6)}]);
+  }
+  async function save(){ setBusy(true); try{ await onSaveWeeks(rows); } finally { setBusy(false); } }
+  return (
+    <div className="card" style={{background:'var(--paper)'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+        <h3 style={{margin:0}}>⚙️ Cấu hình tuần học ({weeks.length} tuần)</h3>
+        <button className="btn sec" onClick={()=>setOpen(v=>!v)}>{open?'Thu gọn':'Chỉnh sửa'}</button>
+      </div>
+      {open && <>
+        <p className="hint">Mỗi tuần có ngày bắt đầu/kết thúc riêng — chỉnh trực tiếp cho khớp lịch thực tế của trường (ví dụ nghỉ Tết, nghỉ lễ). Số tuần trong 1 tháng ở mục 3.2/4.1 sẽ tự tính theo ngày bắt đầu của từng tuần, không cần khai báo riêng.</p>
+        <div className="tbl-wrap" style={{maxHeight:320}}><table>
+          <thead><tr><th>Tuần</th><th>Ngày bắt đầu</th><th>Ngày kết thúc</th></tr></thead>
+          <tbody>{rows.map((r,i)=>
+            <tr key={i}>
+              <td><b>Tuần {i+1}</b></td>
+              <td><input type="date" value={r.start} onChange={e=>setField(i,'start',e.target.value)}/></td>
+              <td><input type="date" value={r.end} onChange={e=>setField(i,'end',e.target.value)}/></td>
+            </tr>
+          )}</tbody>
+        </table></div>
+        <div className="actions" style={{justifyContent:'space-between'}}>
+          <button className="btn sec" onClick={addWeek}>+ Thêm tuần</button>
+          <button className="btn" onClick={save} disabled={busy}>{busy?'Đang lưu…':'Lưu cấu hình tuần'}</button>
+        </div>
+      </>}
+    </div>
+  );
+}
+
+function ThiDuaTab({students, violations, canLog, scopedMas, view, weeks, isAdmin, onSaveWeeks, onAdd, onEditEntry, onDelEntry}){
   const now = new Date();
   const defMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   const [month,setMonth] = useState(defMonth);
-  const [week,setWeek] = useState(monthWeekOf(now.toISOString().slice(0,10)).week);
+  const [week,setWeek] = useState(()=> weekNumberOfDate(now.toISOString().slice(0,10), weeks) || 1);
   const canEdit = ma => canLog && scopedMas && scopedMas.has(ma);
+  const wr = weekRangeOf(week, weeks);
 
   const weekRows = useMemo(()=>{
-    const list = students.map(s=>({...s, score: weekScore(s.ma, month, week, violations)}));
+    const list = students.map(s=>({...s, score: weekScore(s.ma, week, violations, weeks)}));
     return withRank(list,'score');
-  }, [students, violations, month, week]);
+  }, [students, violations, week, weeks]);
 
   const weekEntries = useMemo(()=>{
-    return violations.filter(v=>{ const w=monthWeekOf(v.date); return w && w.month===month && w.week===week && (!scopedMas || scopedMas.has(v.ma)); });
-  }, [violations, month, week, scopedMas]);
+    if(!wr) return [];
+    return violations.filter(v=>v.date>=wr.start && v.date<=wr.end && (!scopedMas || scopedMas.has(v.ma)));
+  }, [violations, wr, scopedMas]);
 
+  const monthWeekNums = useMemo(()=>weeksStartingInMonth(month, weeks), [month, weeks]);
   const monthRows = useMemo(()=>{
     const list = students.map(s=>{
-      const w = [1,2,3,4].map(n=>weekScore(s.ma, month, n, violations));
-      const avg = w.reduce((a,b)=>a+b,0)/4;
-      return {...s, w1:w[0], w2:w[1], w3:w[2], w4:w[3], avg};
+      const ws = monthWeekNums.map(n=>weekScore(s.ma, n, violations, weeks));
+      const avg = ws.length ? ws.reduce((a,b)=>a+b,0)/ws.length : 100;
+      return {...s, ws, avg};
     });
     return withRank(list,'avg');
-  }, [students, violations, month]);
-  const prevMap = useMemo(()=>prevRanks(students, month, violations), [students, month, violations]);
+  }, [students, violations, monthWeekNums, weeks]);
+  const prevMap = useMemo(()=>prevRanks(students, month, violations, weeks), [students, month, violations, weeks]);
 
   const toRows = useMemo(()=>{
     const groups = {};
@@ -756,50 +857,94 @@ function ThiDuaTab({students, violations, canLog, scopedMas, view, onAdd, onEdit
     return withRank(list,'avg');
   }, [monthRows]);
 
+  const [q,setQ] = useState('');
+  const [toF,setToF] = useState('');
+  const toOptions = useMemo(()=>[...new Set(students.map(s=>s.to).filter(x=>x!=null))].sort((a,b)=>a-b), [students]);
+  const flt = arr => {
+    const k=q.trim().toLowerCase();
+    return arr.filter(s=>(!k || (s.ten||'').toLowerCase().includes(k)) && (!toF || String(s.to)===toF));
+  };
+  const weekRowsF = useMemo(()=>flt(weekRows), [weekRows, q, toF]);
+  const monthRowsF = useMemo(()=>flt(monthRows), [monthRows, q, toF]);
+
+  const [eq,setEq] = useState('');
+  const [eTo,setETo] = useState('');
+  const entryCounts = useMemo(()=>{
+    const m={}; weekEntries.forEach(v=>{ m[v.ma]=(m[v.ma]||0)+1; }); return m;
+  }, [weekEntries]);
+  const weekEntriesF = useMemo(()=>{
+    const k=eq.trim().toLowerCase();
+    return weekEntries.filter(v=>{
+      const st=students.find(x=>x.ma===v.ma);
+      if(eTo && String(st?.to)!==eTo) return false;
+      if(k && !((st?.ten||v.ma).toLowerCase().includes(k))) return false;
+      return true;
+    });
+  }, [weekEntries, eq, eTo, students]);
+
   return (
     <div className="card">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
-        <h3>{view==='week'?'Nhập thi đua theo tuần':'Tổng kết thi đua tháng'} — {viMonth(month)}</h3>
+        <h3>{view==='week'?'Nhập thi đua theo tuần':'Tổng kết thi đua tháng'} — {view==='week' ? ('Tuần '+week+(wr?' ('+viDate(wr.start)+' – '+viDate(wr.end)+')':'')) : viMonth(month)}</h3>
         <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
-          <input type="month" style={{width:'auto'}} value={month} onChange={e=>setMonth(e.target.value)}/>
-          {view==='week' && <select style={{width:'auto'}} value={week} onChange={e=>setWeek(parseInt(e.target.value,10))}>
-            {[1,2,3,4].map(n=><option key={n} value={n}>Tuần {n}</option>)}
-          </select>}
+          <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:160,minWidth:110}} value={q} onChange={e=>setQ(e.target.value)}/>
+          <select style={{width:'auto'}} value={toF} onChange={e=>setToF(e.target.value)}>
+            <option value="">Tất cả các tổ</option>
+            {toOptions.map(t=><option key={t} value={t}>Tổ {t}</option>)}
+          </select>
+          {view==='week'
+            ? <select style={{width:'auto'}} value={week} onChange={e=>setWeek(parseInt(e.target.value,10))}>
+                {weeks.map((w,i)=><option key={i} value={i+1}>Tuần {i+1} ({viDate(w.start)}–{viDate(w.end)})</option>)}
+              </select>
+            : <input type="month" style={{width:'auto'}} value={month} onChange={e=>setMonth(e.target.value)}/>}
           <button className="btn sec" onClick={()=>{
-            if(view==='week') exportXlsx(weekRows.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Điểm tuần':s.score,'Xếp loại':xlRank(s.score).label,'Hạng':s.rank})), 'thi_dua_tuan'+week+'_'+month+'.xlsx', 'Tuan '+week);
-            else exportXlsx(monthRows.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Tuần 1':s.w1,'Tuần 2':s.w2,'Tuần 3':s.w3,'Tuần 4':s.w4,'TB tháng':s.avg.toFixed(1),'Xếp loại':xlRank(s.avg).label,'Hạng':s.rank,'Tăng bậc':bacText(bacValue(prevMap,s.ma,s.rank))})), 'thi_dua_thang_'+month+'.xlsx', 'Thang');
+            if(view==='week') exportXlsx(weekRowsF.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Điểm tuần':s.score,'Xếp loại':xlRank(s.score).label,'Hạng':s.rank})), 'thi_dua_tuan'+week+'.xlsx', 'Tuan '+week);
+            else exportXlsx(monthRowsF.map(s=>{ const o={'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to}; s.ws.forEach((v,i)=>o['Tuần '+(monthWeekNums[i])]=v); o['TB tháng']=s.avg.toFixed(1); o['Xếp loại']=xlRank(s.avg).label; o['Hạng']=s.rank; o['Tăng bậc']=bacText(bacValue(prevMap,s.ma,s.rank)); return o; }), 'thi_dua_thang_'+month+'.xlsx', 'Thang');
           }}>⬇️ Xuất Excel</button>
         </div>
       </div>
+
+      {view==='week' && isAdmin && <div style={{marginBottom:14}}><WeekConfigEditor weeks={weeks} onSaveWeeks={onSaveWeeks}/></div>}
 
       {view==='week' ? (
         <>
         <div className="tbl-wrap"><table>
           <thead><tr><th>STT</th><th>Họ tên</th>{canLog && <th>Thao tác</th>}<th>Tổ</th><th>Điểm tuần</th><th>Xếp loại</th><th>Hạng</th></tr></thead>
-          <tbody>{weekRows.map(s=>{ const r=xlRank(s.score); const wkDay=(week-1)*7+1; const defDate=month+'-'+String(wkDay).padStart(2,'0'); return <tr key={s.ma}>
+          <tbody>{weekRowsF.map(s=>{ const r=xlRank(s.score); const defDate=wr?wr.start:new Date().toISOString().slice(0,10); return <tr key={s.ma}>
             <td>{s.stt}</td><td>{s.ten}</td>
             {canLog && <td>{canEdit(s.ma) && <button className="link" onClick={()=>onAdd(s,defDate)}>+ Ghi nề nếp</button>}</td>}
             <td>Tổ {s.to??'-'}</td><td>{s.score}</td><td><span className={"pill "+r.cls}>{r.label}</span></td><td><b>{s.rank}</b></td>
           </tr>; })}</tbody>
         </table></div>
         {canLog && <>
-          <h3 style={{marginTop:18}}>Các ghi nhận trong tuần {week}</h3>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginTop:18,marginBottom:4}}>
+            <h3 style={{margin:0}}>Các ghi nhận trong tuần {week} ({weekEntriesF.length}/{weekEntries.length})</h3>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+              <input placeholder="🔍 Tìm theo tên…" style={{width:'100%',maxWidth:180,minWidth:120}} value={eq} onChange={e=>setEq(e.target.value)}/>
+              <select style={{width:'auto'}} value={eTo} onChange={e=>setETo(e.target.value)}>
+                <option value="">Tất cả các tổ</option>
+                {toOptions.map(t=><option key={t} value={t}>Tổ {t}</option>)}
+              </select>
+            </div>
+          </div>
+          <p className="hint">Học sinh có <b>2 lỗi trở lên</b> trong tuần được tô đậm và đánh dấu ⚠️ để dễ kiểm tra nhập trùng.</p>
           <div className="tbl-wrap"><table>
-            <thead><tr><th>Ngày</th><th>Học sinh</th><th>Nội dung</th><th>Điểm</th><th>Ghi chú</th><th>Thao tác</th></tr></thead>
-            <tbody>{weekEntries.length? weekEntries.map(v=>{ const st=students.find(x=>x.ma===v.ma); return <tr key={v.id}>
-              <td>{viDate(v.date)}</td><td>{st?st.ten:v.ma}</td><td>{v.text}</td>
+            <thead><tr><th>Ngày</th><th>Học sinh</th><th>Tổ</th><th>Nội dung</th><th>Điểm</th><th>Ghi chú</th><th>Thao tác</th></tr></thead>
+            <tbody>{weekEntriesF.length? weekEntriesF.map(v=>{ const st=students.find(x=>x.ma===v.ma); const dup=entryCounts[v.ma]>1; return <tr key={v.id} style={dup?{background:'var(--amberbg)'}:undefined}>
+              <td>{viDate(v.date)}</td><td>{dup?'⚠️ ':''}{st?st.ten:v.ma}{dup?' ×'+entryCounts[v.ma]:''}</td><td>Tổ {st?.to??'-'}</td><td>{v.text}</td>
               <td style={{color:v.diem<0?'var(--bad)':'var(--good)'}}>{v.diem>0?'+':''}{v.diem}</td><td className="muted">{v.note||''}</td>
               <td><button className="link" onClick={()=>onEditEntry(v,st)}>Sửa</button> · <button className="link" onClick={()=>onDelEntry(v.id)}>Xoá</button></td>
-            </tr>; }) : <tr><td colSpan="6" className="muted">Chưa có ghi nhận nào trong tuần này.</td></tr>}</tbody>
+            </tr>; }) : <tr><td colSpan="7" className="muted">Không có ghi nhận nào khớp bộ lọc.</td></tr>}</tbody>
           </table></div>
         </>}
         </>
       ) : (
         <>
         <div className="tbl-wrap"><table>
-          <thead><tr><th>STT</th><th>Họ tên</th><th>Tổ</th><th>Tuần 1</th><th>Tuần 2</th><th>Tuần 3</th><th>Tuần 4</th><th>TB tháng</th><th>Xếp loại</th><th>Hạng</th><th>Tăng bậc</th></tr></thead>
-          <tbody>{monthRows.map(s=>{ const r=xlRank(s.avg); return <tr key={s.ma}>
-            <td>{s.stt}</td><td>{s.ten}</td><td>Tổ {s.to??'-'}</td><td>{s.w1}</td><td>{s.w2}</td><td>{s.w3}</td><td>{s.w4}</td>
+          <thead><tr><th>STT</th><th>Họ tên</th><th>Tổ</th>{monthWeekNums.map(n=><th key={n}>Tuần {n}</th>)}<th>TB tháng</th><th>Xếp loại</th><th>Hạng</th><th>Tăng bậc</th></tr></thead>
+          <tbody>{monthRowsF.map(s=>{ const r=xlRank(s.avg); return <tr key={s.ma}>
+            <td>{s.stt}</td><td>{s.ten}</td><td>Tổ {s.to??'-'}</td>
+            {s.ws.map((v,i)=><td key={i}>{v}</td>)}
             <td><b>{s.avg.toFixed(1)}</b></td><td><span className={"pill "+r.cls}>{r.label}</span></td><td><b>{s.rank}</b></td><td><Bac n={bacValue(prevMap,s.ma,s.rank)}/></td>
           </tr>; })}</tbody>
         </table></div>
@@ -814,7 +959,7 @@ function ThiDuaTab({students, violations, canLog, scopedMas, view, onAdd, onEdit
   );
 }
 
-function SummaryTab({students, violations, attendance, view}){
+function SummaryTab({students, violations, attendance, view, weeks}){
   const now = new Date();
   const defMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   const [month,setMonth] = useState(defMonth);
@@ -825,20 +970,20 @@ function SummaryTab({students, violations, attendance, view}){
 
   const monthRows = useMemo(()=>{
     const list = students.map(s=>{
-      const avg = monthAvg(s.ma, month, violations);
+      const avg = monthAvg(s.ma, month, violations, weeks);
       return {...s, avg,
         vp: attCount(s.ma,[month],'absent_p'), vk: attCount(s.ma,[month],'absent_k'), muon: attCount(s.ma,[month],'late')};
     });
     return withRank(list,'avg');
   }, [students, violations, attendance, month]);
-  const prevMap = useMemo(()=>prevRanks(students, month, violations), [students, month, violations]);
+  const prevMap = useMemo(()=>prevRanks(students, month, violations, weeks), [students, month, violations, weeks]);
 
   const semMonths = SEMESTERS[sem];
   // Chỉ tính vào điểm học kỳ những tháng đã có dữ liệu ghi nhận
   const activeSem = useMemo(()=>semMonths.filter(m=>violations.some(v=>monthOf(v.date)===m)), [semMonths, violations]);
   const semRows = useMemo(()=>{
     const list = students.map(s=>{
-      const ms = semMonths.map(m=> activeSem.includes(m) ? monthAvg(s.ma,m,violations) : null);
+      const ms = semMonths.map(m=> activeSem.includes(m) ? monthAvg(s.ma,m,violations,weeks) : null);
       const vals = ms.filter(x=>x!==null);
       const avg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 100;
       return {...s, ms, avg,
@@ -847,11 +992,16 @@ function SummaryTab({students, violations, attendance, view}){
     return withRank(list,'avg');
   }, [students, violations, attendance, sem]);
 
+  const [q,setQ] = useState('');
+  const flt = arr => { const k=q.trim().toLowerCase(); return k ? arr.filter(s=>(s.ten||'').toLowerCase().includes(k)) : arr; };
+  const monthRowsF = useMemo(()=>flt(monthRows), [monthRows, q]);
+  const semRowsF = useMemo(()=>flt(semRows), [semRows, q]);
+
   function doExport(){
     if(view==='month'){
-      exportXlsx(monthRows.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Điểm TB':s.avg.toFixed(1),'Xếp loại':xlRank(s.avg).label,'Hạng':s.rank,'Tăng bậc':bacText(bacValue(prevMap,s.ma,s.rank)),'Vắng phép':s.vp,'Vắng không phép':s.vk,'Đi muộn':s.muon})), 'tong_ket_thang_'+month+'.xlsx', 'Tong ket thang');
+      exportXlsx(monthRowsF.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Điểm TB':s.avg.toFixed(1),'Xếp loại':xlRank(s.avg).label,'Hạng':s.rank,'Tăng bậc':bacText(bacValue(prevMap,s.ma,s.rank)),'Vắng phép':s.vp,'Vắng không phép':s.vk,'Đi muộn':s.muon})), 'tong_ket_thang_'+month+'.xlsx', 'Tong ket thang');
     } else {
-      exportXlsx(semRows.map(s=>{
+      exportXlsx(semRowsF.map(s=>{
         const o={'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to};
         semMonths.forEach((m,i)=>{ o[mLabel(m)] = s.ms[i]===null ? '' : s.ms[i].toFixed(1); });
         o['ĐTB học kỳ']=s.avg.toFixed(1); o['Xếp loại']=xlRank(s.avg).label; o['Hạng']=s.rank;
@@ -871,13 +1021,14 @@ function SummaryTab({students, violations, attendance, view}){
             : <select style={{width:'auto'}} value={sem} onChange={e=>setSem(e.target.value)}>
                 <option value="HK1">Học kỳ 1 (tháng 9–12)</option><option value="HK2">Học kỳ 2 (tháng 1–5)</option>
               </select>}
+          <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:180,minWidth:120}} value={q} onChange={e=>setQ(e.target.value)}/>
           <button className="btn sec" onClick={doExport}>⬇️ Xuất Excel</button>
         </div>
       </div>
       {view==='month' ? (
         <div className="tbl-wrap"><table>
           <thead><tr><th>STT</th><th>Họ tên</th><th>Tổ</th><th>Điểm TB</th><th>Xếp loại</th><th>Hạng</th><th>Tăng bậc</th><th>Vắng phép</th><th>Vắng không phép</th><th>Đi muộn</th></tr></thead>
-          <tbody>{monthRows.map(s=>{ const r=xlRank(s.avg); return <tr key={s.ma}>
+          <tbody>{monthRowsF.map(s=>{ const r=xlRank(s.avg); return <tr key={s.ma}>
             <td>{s.stt}</td><td>{s.ten}</td><td>Tổ {s.to??'-'}</td><td><b>{s.avg.toFixed(1)}</b></td>
             <td><span className={"pill "+r.cls}>{r.label}</span></td><td><b>{s.rank}</b></td><td><Bac n={bacValue(prevMap,s.ma,s.rank)}/></td>
             <td>{s.vp}</td><td>{s.vk}</td><td>{s.muon}</td>
@@ -886,7 +1037,7 @@ function SummaryTab({students, violations, attendance, view}){
       ) : (
         <div className="tbl-wrap"><table>
           <thead><tr><th>STT</th><th>Họ tên</th><th>Tổ</th>{semMonths.map(m=><th key={m}>{mLabel(m)}</th>)}<th>ĐTB học kỳ</th><th>Xếp loại</th><th>Hạng</th><th>Vắng phép</th><th>Vắng không phép</th><th>Đi muộn</th></tr></thead>
-          <tbody>{semRows.map(s=>{ const r=xlRank(s.avg); return <tr key={s.ma}>
+          <tbody>{semRowsF.map(s=>{ const r=xlRank(s.avg); return <tr key={s.ma}>
             <td>{s.stt}</td><td>{s.ten}</td><td>Tổ {s.to??'-'}</td>
             {s.ms.map((v,i)=><td key={i}>{v===null ? <span className="muted">—</span> : v.toFixed(1)}</td>)}
             <td><b>{s.avg.toFixed(1)}</b></td><td><span className={"pill "+r.cls}>{r.label}</span></td><td><b>{s.rank}</b></td>

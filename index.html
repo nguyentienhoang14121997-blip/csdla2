@@ -148,13 +148,14 @@ const RULES=[
 {code:"19",text:"CBL hoặc thành viên không thực hiện/thực hiện không tốt nhiệm vụ GVCN phân công",diem:-20},
 {code:"20",text:"Không thực hiện báo cáo, phản hồi của GVCN theo quy định",diem:-10},
 {code:"21",text:"Có điểm thấp dưới 5",diem:-5},
-{code:"22",text:"Có 1 lần tích cực được giáo viên gọi trả lời",diem:5},
-{code:"23",text:"Có 1 điểm tốt (từ 8 trở lên)",diem:10},
-{code:"24",text:"Tham gia văn nghệ/TDTT/báo cáo nội dung trước toàn trường",diem:60},
-{code:"25",text:"Có giải HSG các cấp",diem:50},
-{code:"26",text:"Thành viên lớp/CBL hoàn thành tốt nhiệm vụ được phân công",diem:20},
-{code:"27",text:"Lớp trưởng, Bí thư (định kỳ)",diem:20},
-{code:"28",text:"Lớp phó, tổ trưởng, sao đỏ, thư ký (định kỳ)",diem:15},
+{code:"22",text:"Vi phạm khác",diem:-10},
+{code:"23",text:"Có 1 lần tích cực được giáo viên gọi trả lời",diem:5},
+{code:"24",text:"Có 1 điểm tốt (từ 8 trở lên)",diem:10},
+{code:"25",text:"Tham gia văn nghệ/TDTT/báo cáo nội dung trước toàn trường",diem:60},
+{code:"26",text:"Có giải HSG các cấp",diem:50},
+{code:"27",text:"Thành viên lớp/CBL hoàn thành tốt nhiệm vụ được phân công",diem:20},
+{code:"28",text:"Lớp trưởng, Bí thư (định kỳ)",diem:20},
+{code:"29",text:"Lớp phó, tổ trưởng, sao đỏ, thư ký (định kỳ)",diem:15},
 ];
 const ATT_STATUS = [
   {code:'present', label:'Có mặt', cls:'good'},
@@ -869,8 +870,9 @@ function ThiDuaTab({students, violations, canLog, scopedMas, view, weeks, isAdmi
 
   const [eq,setEq] = useState('');
   const [eTo,setETo] = useState('');
+  // Chỉ tính trùng khi CÙNG học sinh + CÙNG nội dung lỗi + CÙNG ngày
   const entryCounts = useMemo(()=>{
-    const m={}; weekEntries.forEach(v=>{ m[v.ma]=(m[v.ma]||0)+1; }); return m;
+    const m={}; weekEntries.forEach(v=>{ const k=v.ma+'|'+v.text+'|'+v.date; m[k]=(m[k]||0)+1; }); return m;
   }, [weekEntries]);
   const weekEntriesF = useMemo(()=>{
     const k=eq.trim().toLowerCase();
@@ -927,11 +929,11 @@ function ThiDuaTab({students, violations, canLog, scopedMas, view, weeks, isAdmi
               </select>
             </div>
           </div>
-          <p className="hint">Học sinh có <b>2 lỗi trở lên</b> trong tuần được tô đậm và đánh dấu ⚠️ để dễ kiểm tra nhập trùng.</p>
+          <p className="hint">Cùng học sinh bị ghi <b>cùng một lỗi trong cùng một ngày</b> từ 2 lần trở lên sẽ được tô đậm và đánh dấu ⚠️ để dễ kiểm tra nhập trùng.</p>
           <div className="tbl-wrap"><table>
             <thead><tr><th>Ngày</th><th>Học sinh</th><th>Tổ</th><th>Nội dung</th><th>Điểm</th><th>Ghi chú</th><th>Thao tác</th></tr></thead>
-            <tbody>{weekEntriesF.length? weekEntriesF.map(v=>{ const st=students.find(x=>x.ma===v.ma); const dup=entryCounts[v.ma]>1; return <tr key={v.id} style={dup?{background:'var(--amberbg)'}:undefined}>
-              <td>{viDate(v.date)}</td><td>{dup?'⚠️ ':''}{st?st.ten:v.ma}{dup?' ×'+entryCounts[v.ma]:''}</td><td>Tổ {st?.to??'-'}</td><td>{v.text}</td>
+            <tbody>{weekEntriesF.length? weekEntriesF.map(v=>{ const st=students.find(x=>x.ma===v.ma); const dk=v.ma+'|'+v.text+'|'+v.date; const dup=entryCounts[dk]>1; return <tr key={v.id} style={dup?{background:'var(--amberbg)'}:undefined}>
+              <td>{viDate(v.date)}</td><td>{dup?'⚠️ ':''}{st?st.ten:v.ma}{dup?' ×'+entryCounts[dk]:''}</td><td>Tổ {st?.to??'-'}</td><td>{v.text}</td>
               <td style={{color:v.diem<0?'var(--bad)':'var(--good)'}}>{v.diem>0?'+':''}{v.diem}</td><td className="muted">{v.note||''}</td>
               <td><button className="link" onClick={()=>onEditEntry(v,st)}>Sửa</button> · <button className="link" onClick={()=>onDelEntry(v.id)}>Xoá</button></td>
             </tr>; }) : <tr><td colSpan="7" className="muted">Không có ghi nhận nào khớp bộ lọc.</td></tr>}</tbody>

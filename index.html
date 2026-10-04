@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#233150">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,30 +27,41 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/12.3.0/firebase-firestore-compat.min.js"></script>
 <style>
 :root{
-  --ink:#1c2333; --ink2:#3d4560; --paper:#f6f4ee; --card:#ffffff;
-  --line:#e2ddd0; --navy:#233150; --navy2:#33456e; --amber:#c8862b;
-  --amberbg:#fbeedc; --good:#2f7d4f; --bad:#b2402d; --shadow:rgba(28,35,51,.08);
+  --ink:#1c2333; --ink2:#3d4560; --paper:#f5f3ee; --card:#ffffff;
+  --line:#e4ddd4; --navy:#7a1733; --navy2:#9c2847; --maroon:#7a1733; --maroon2:#5c1227; --amber:#c8862b;
+  --amberbg:#fbeedc; --good:#2f7d4f; --bad:#b2402d; --shadow:rgba(28,35,51,.1);
   padding-top: env(safe-area-inset-top,0px); padding-bottom: env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){--ink:#eae7dd;--ink2:#c3c2ba;--paper:#171a20;--card:#1f232b;--line:#333844;--navy:#8fa6d8;--navy2:#a9bce3;--amber:#e0a955;--amberbg:#3a2f1c;--shadow:rgba(0,0,0,.35);}
+  :root:not([data-theme="light"]){--ink:#eae7dd;--ink2:#c3c2ba;--paper:#171a20;--card:#1f232b;--line:#333844;--navy:#c4607f;--navy2:#d98aa3;--maroon:#7a1733;--maroon2:#5c1227;--amber:#e0a955;--amberbg:#3a2f1c;--shadow:rgba(0,0,0,.35);}
 }
-:root[data-theme="dark"]{--ink:#eae7dd;--ink2:#c3c2ba;--paper:#171a20;--card:#1f232b;--line:#333844;--navy:#8fa6d8;--navy2:#a9bce3;--amber:#e0a955;--amberbg:#3a2f1c;--shadow:rgba(0,0,0,.35);}
+:root[data-theme="dark"]{--ink:#eae7dd;--ink2:#c3c2ba;--paper:#171a20;--card:#1f232b;--line:#333844;--navy:#c4607f;--navy2:#d98aa3;--maroon:#7a1733;--maroon2:#5c1227;--amber:#e0a955;--amberbg:#3a2f1c;--shadow:rgba(0,0,0,.35);}
 *{box-sizing:border-box}
 html,body,#root{height:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:'Be Vietnam Pro',-apple-system,"Segoe UI",Roboto,Arial,sans-serif;}
 h1,h2,h3{font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-weight:600;margin:0 0 4px}
 .wrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
-.top{position:sticky;top:env(safe-area-inset-top,0px);background:var(--navy);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:5}
-.top .brand{font-family:'Noto Serif',Georgia,serif;font-size:18px}
-.top .who{font-size:12.5px;opacity:.85;display:flex;align-items:center;gap:10px}
-.top button{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:5px 10px;font-size:12.5px;cursor:pointer}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.top1{background:linear-gradient(90deg,var(--maroon2),var(--maroon) 55%,var(--navy2));color:#fff;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.top1 .brandwrap{display:flex;align-items:center;gap:10px;min-width:0}
+.top1 .logo{font-size:22px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+.top1 .brand{font-family:'Noto Serif',Georgia,serif;font-size:16px;font-weight:700;letter-spacing:.02em;color:var(--amber);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top1 .sub{font-size:10.5px;color:rgba(255,255,255,.75);letter-spacing:.03em}
+.top1 .badge{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:7px;padding:5px 11px;font-size:11.5px;white-space:nowrap}
+.top .who{font-size:12.5px;opacity:.92;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.top button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:5px 10px;font-size:12.5px;cursor:pointer}
+.top button:hover{background:rgba(255,255,255,.22)}
+.top2{background:var(--card);border-bottom:1px solid var(--line);padding:0 12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px;box-shadow:0 1px 3px var(--shadow)}
-.tabs{display:flex;gap:6px;margin:16px 0;flex-wrap:wrap}
-.tab{padding:8px 14px;border-radius:20px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-size:13.5px;color:var(--ink2)}
-.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
-.tabs.sub{margin-top:2px}
-.tabs.sub .tab{font-size:12.5px;padding:6px 12px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.top2 .tabs{padding:8px 0}
+.tab{padding:9px 13px;border-radius:7px;border:1px solid transparent;background:transparent;cursor:pointer;font-size:13px;font-weight:500;color:var(--ink2);border-bottom:2.5px solid transparent;transition:background .12s}
+.tab:hover{background:var(--paper)}
+.tab.active{background:var(--amberbg);color:var(--maroon2);border-bottom-color:var(--maroon)}
+.wrap .tabs{margin:16px 0}
+.tabs.sub{margin-top:2px;background:var(--paper);border-radius:9px;padding:4px;display:inline-flex}
+.tabs.sub .tab{font-size:12px;padding:6px 12px;border-radius:6px;border-bottom:none}
+.tabs.sub .tab.active{background:var(--card);box-shadow:0 1px 3px var(--shadow);border-bottom:none}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 th{color:var(--ink2);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.02em}
@@ -73,10 +87,16 @@ label{font-size:12px;color:var(--ink2);display:block;margin-bottom:3px}
 @media(max-width:640px){.rolecards{grid-template-columns:1fr}.row2{grid-template-columns:1fr}}
 @media(max-width:600px){
   .wrap{padding:14px 10px 60px}
-  .top{padding:10px 12px;flex-wrap:wrap;row-gap:6px}
-  .top .brand{font-size:15px}
+  .top1{padding:9px 12px;flex-wrap:wrap;row-gap:6px}
+  .top1 .brand{font-size:13.5px}
+  .top1 .sub{font-size:9.5px}
+  .top1 .logo{font-size:18px}
+  .top1 .badge{display:none}
   .top .who{font-size:11px;gap:6px;flex-wrap:wrap}
   .top button{padding:4px 8px;font-size:11.5px}
+  .top2{padding:0 8px}
+  .top2 .tabs{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
+  .top2 .tab{white-space:nowrap}
   h1{font-size:21px}
   h1,h2{word-break:break-word}
   h2{font-size:18px}
@@ -111,6 +131,13 @@ label{font-size:12px;color:var(--ink2);display:block;margin-bottom:3px}
 </head>
 <body>
 <div id="root"></div>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
 <script type="text/babel">
 const {useState,useEffect,useMemo} = React;
 
@@ -126,7 +153,7 @@ const FIREBASE_CONFIG = {
 firebase.initializeApp(FIREBASE_CONFIG);
 // =======================================================================
 
-const RULES=[
+const DEFAULT_RULES=[
 {code:"01",text:"Bị ghi sổ đầu bài",diem:-20},
 {code:"02",text:"Nghỉ học không phép hoặc nghỉ hoạt động tập thể không lý do chính đáng",diem:-30},
 {code:"03",text:"Đi học muộn",diem:-20},
@@ -273,20 +300,26 @@ const ADMIN_PASSWORD = 'gvcn2026';
 function Login({db, onLogin}){
   const [picking,setPicking] = useState(null);
   const [students,setStudents] = useState([]);
-  const [ma,setMa] = useState('');
+  const [phone,setPhone] = useState('');
   const [pw,setPw] = useState('');
   const [showPw,setShowPw] = useState(false);
   const [err,setErr] = useState('');
 
   async function choose(role){
-    setErr(''); setPw('');
+    setErr(''); setPw(''); setPhone('');
     if(role==='admin'){ setStudents([]); setPicking('admin'); return; }
     const snap = await db.collection('students').get();
     let list = snap.docs.map(d=>d.data()).sort((a,b)=>a.stt-b.stt);
     if(role==='cb') list = list.filter(s=>s.chucvu);
     setStudents(list);
-    setMa(list[0]?list[0].ma:'');
     setPicking(role);
+  }
+
+  function findByPhone(role, p){
+    const ph = p.trim();
+    if(!ph) return null;
+    if(role==='ph') return students.find(s=>s.sdt===ph || s.sdtcha===ph || s.sdtme===ph);
+    return students.find(s=>s.sdt===ph);
   }
 
   async function submit(){
@@ -297,17 +330,20 @@ function Login({db, onLogin}){
       if(pw!==pwReal){ setErr('Sai mật khẩu.'); return; }
       onLogin({role:'admin', first: pw===ADMIN_PASSWORD}); return;
     }
-    const s = students.find(x=>x.ma===ma);
-    if(!s){ setErr('Vui lòng chọn tên.'); return; }
+    const s = findByPhone(picking, phone);
+    if(!s){ setErr('Không tìm thấy số điện thoại này trong danh sách lớp. Vui lòng kiểm tra lại hoặc liên hệ GVCN.'); return; }
     const need = picking==='ph' ? (s.pw_ph||'') : (s.pw_hs||'');
     if(pw!==need){ setErr('Sai mật khẩu.'); return; }
     const defPw = picking==='ph' ? (s.sdt||'') : ((s.ngaysinh||'').replace(/\//g,''));
-    onLogin({role: picking==='ph'?'ph':picking, ma, first: pw===defPw});
+    onLogin({role: picking==='ph'?'ph':picking, ma:s.ma, first: pw===defPw});
   }
 
   return (
     <div>
-      <div className="top"><div className="brand">CSDL Lớp 11A2</div><div></div></div>
+      <div className="top"><div className="top1">
+        <div className="brandwrap"><span className="logo">🎓</span><div><div className="brand">CSDL Lớp 11A2</div><div className="sub">THPT Cao Bá Quát – Quốc Oai</div></div></div>
+        <div className="badge">Năm học 2026–2027</div>
+      </div></div>
       <div className="wrap hero">
         <h1>Chọn vai trò đăng nhập</h1>
         <p className="muted">THPT Cao Bá Quát — Quốc Oai · Năm học 2026–2027</p>
@@ -321,10 +357,8 @@ function Login({db, onLogin}){
           <div className="card" style={{maxWidth:420,margin:'22px auto 0',textAlign:'left'}}>
             {picking!=='admin' && (students.length ? (
               <>
-                <label>{picking==='ph'?'Chọn tên con của bạn':'Chọn tên của bạn'}</label>
-                <select value={ma} onChange={e=>setMa(e.target.value)}>
-                  {students.map(s=><option key={s.ma} value={s.ma}>{s.ten}{picking==='cb'?' — '+(CV_LABEL[s.chucvu]||'')+(s.chucvu==='to_truong'?' Tổ '+s.to:''):''}</option>)}
-                </select>
+                <label>{picking==='ph'?'Số điện thoại phụ huynh (cha, mẹ hoặc liên hệ)':'Số điện thoại liên hệ của bạn'}</label>
+                <input type="tel" inputMode="numeric" placeholder="VD: 0912345678" value={phone} onChange={e=>setPhone(e.target.value)}/>
               </>
             ) : <p className="hint">Giáo viên chưa phân công cán bộ lớp nào. Vui lòng liên hệ GVCN.</p>)}
             {(picking==='admin' || students.length>0) && <>
@@ -344,10 +378,15 @@ function Login({db, onLogin}){
   );
 }
 
-function Modal({modal, onClose, onSave, err}){
-  const [form,setForm] = useState(()=> modal && modal.type==='logViolation'
-    ? {text:modal.edit?.text||'', diem:modal.edit?.diem??-10, date:modal.edit?.date||modal.defaultDate||new Date().toISOString().slice(0,10), note:modal.edit?.note||''}
-    : modal && modal.type==='editStudent' ? {...modal.data} : {});
+function Modal({modal, onClose, onSave, err, rules}){
+  const [form,setForm] = useState(()=>{
+    if(modal && modal.type==='logViolation'){
+      const c = modal.edit?.count || 1;
+      const perUnit = modal.edit ? Math.round((modal.edit.diem||0)/c) : -10;
+      return {text:modal.edit?.text||'', diem:perUnit, count:c, date:modal.edit?.date||modal.defaultDate||new Date().toISOString().slice(0,10), note:modal.edit?.note||''};
+    }
+    return modal && modal.type==='editStudent' ? {...modal.data} : {};
+  });
   const [sp1,setSp1] = useState(false);
   const [sp2,setSp2] = useState(false);
   const [saving,setSaving] = useState(false);
@@ -364,16 +403,18 @@ function Modal({modal, onClose, onSave, err}){
     body = <>
       <h3>{modal.edit?'Sửa ghi nhận':'Ghi nhận'}: {modal.student.ten}</h3>
       <div className="field"><label>Loại</label>
-        <select onChange={e=>{ const r=RULES.find(x=>x.code===e.target.value); if(r) setForm(f=>({...f,text:r.text,diem:r.diem})); }}>
+        <select onChange={e=>{ const r=rules.find(x=>x.code===e.target.value); if(r) setForm(f=>({...f,text:r.text,diem:r.diem,count:1})); }}>
           <option value="">— Tuỳ chọn khác —</option>
-          {RULES.map(r=><option key={r.code} value={r.code}>{r.code} - {r.diem>0?'+':''}{r.diem} - {r.text}</option>)}
+          {rules.map(r=><option key={r.code} value={r.code}>{r.code} - {r.diem>0?'+':''}{r.diem} - {r.text}</option>)}
         </select>
       </div>
       <div className="field"><label>Nội dung</label><input value={form.text} onChange={e=>set('text',e.target.value)} placeholder="Nội dung ghi nhận"/></div>
       <div className="row2">
-        <div className="field"><label>Điểm (+/-)</label><input type="number" value={form.diem} onChange={e=>set('diem',parseInt(e.target.value,10))}/></div>
-        <div className="field"><label>Ngày</label><input type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></div>
+        <div className="field"><label>Điểm mỗi lần (+/-)</label><input type="number" value={form.diem} onChange={e=>set('diem',parseInt(e.target.value,10))}/></div>
+        <div className="field"><label>Số lần vi phạm</label><input type="number" min="1" value={form.count} onChange={e=>set('count', Math.max(1, parseInt(e.target.value,10)||1))}/></div>
       </div>
+      <p className="hint">Tổng điểm sẽ ghi: <b style={{color:(form.diem*form.count)<0?'var(--bad)':'var(--good)'}}>{(form.diem*form.count)>0?'+':''}{form.diem*form.count}</b>{form.count>1?' ('+form.diem+' × '+form.count+' lần)':''}</p>
+      <div className="field"><label>Ngày</label><input type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></div>
       <div className="field"><label>Ghi chú (không bắt buộc)</label><input value={form.note} onChange={e=>set('note',e.target.value)}/></div>
       {err && <div className="err">{err}</div>}
       <div className="actions"><button className="btn sec" onClick={onClose} disabled={saving}>Huỷ</button><button className="btn" onClick={()=>doSave(form)} disabled={saving}>{saving?'Đang lưu…':'Lưu'}</button></div>
@@ -476,6 +517,7 @@ function App(){
   const [nudge,setNudge] = useState(false);
   useEffect(()=>{ if(nudge && db){ openModal({type:'changePassword', first:true}); setNudge(false); } },[nudge,db]);
   const [weeks,setWeeks] = useState([]);
+  const [rulesList,setRulesList] = useState(DEFAULT_RULES);
   const [toast,setToast] = useState('');
   function showToast(msg){ setToast(msg); setTimeout(()=>setToast(cur=>cur===msg?'':cur), 2200); }
 
@@ -509,6 +551,13 @@ function App(){
       } else {
         setWeeks(wk.data().list);
       }
+      const ru = await d.doc('meta/rules').get();
+      if(!ru.exists || !ru.data() || !ru.data().list || !ru.data().list.length){
+        await d.doc('meta/rules').set({list: DEFAULT_RULES});
+        setRulesList(DEFAULT_RULES);
+      } else {
+        setRulesList(ru.data().list);
+      }
       setDb(d);
     })();
   },[]);
@@ -517,6 +566,11 @@ function App(){
     await db.doc('meta/weeks').set({list});
     setWeeks(list);
     showToast('Đã lưu cấu hình tuần học ✓');
+  }
+  async function saveRules(list){
+    await db.doc('meta/rules').set({list});
+    setRulesList(list);
+    showToast('Đã lưu danh mục lỗi ✓ — áp dụng cho mọi tài khoản');
   }
   async function refresh(d){
     const dd = d||db;
@@ -536,17 +590,19 @@ function App(){
     try{
     if(modal.type==='logViolation'){
       if(!form.text || isNaN(form.diem)){ setErr('Vui lòng nhập nội dung và điểm hợp lệ.'); return; }
+      if(!form.count || form.count<1){ setErr('Số lần vi phạm phải từ 1 trở lên.'); return; }
       if(!form.date){ setErr('Vui lòng chọn ngày.'); return; }
+      const total = form.diem*form.count;
       if(modal.edit){
-        const updated={ma:modal.student.ma, text:form.text, diem:form.diem, date:form.date, note:form.note||'', by:session.role, at:modal.edit.at||Date.now()};
+        const updated={ma:modal.student.ma, text:form.text, diem:total, count:form.count, date:form.date, note:form.note||'', by:session.role, at:modal.edit.at||Date.now()};
         await db.doc('violations/'+modal.edit.id).set(updated);
         setViolations(vs=>vs.map(v=>v.id===modal.edit.id?{id:modal.edit.id,...updated}:v));
       } else {
-        const payload={ma:modal.student.ma, text:form.text, diem:form.diem, date:form.date, note:form.note||'', by:session.role, at:Date.now()};
+        const payload={ma:modal.student.ma, text:form.text, diem:total, count:form.count, date:form.date, note:form.note||'', by:session.role, at:Date.now()};
         const ref = await db.collection('violations').add(payload);
         setViolations(vs=>[{id:ref.id, ...payload}, ...vs]);
       }
-      setModal(null); showToast('Đã lưu ✓ '+modal.student.ten+' — '+(form.diem>0?'+':'')+form.diem+' điểm');
+      setModal(null); showToast('Đã lưu ✓ '+modal.student.ten+' — '+(total>0?'+':'')+total+' điểm'+(form.count>1?' (×'+form.count+')':''));
     } else if(modal.type==='editStudent'){
       if(!form.ten || !form.ma){ setErr('Vui lòng nhập họ tên và mã định danh.'); return; }
       const data={...form, stt: (modal.data&&modal.data.stt) || (students.length+1)};
@@ -598,24 +654,27 @@ function App(){
   return (
     <div>
       <div className="top">
-        <div className="brand">CSDL Lớp 11A2</div>
-        <div className="who">{roleLabel}{me?' · '+me.ten:''}{restrictToTo?' · Tổ '+me.to:''} <button onClick={()=>{setErr('');openModal({type:'changePassword'});}}>🔑 Đổi MK</button> <button onClick={logout}>Đăng xuất</button></div>
+        <div className="top1">
+          <div className="brandwrap"><span className="logo">🎓</span><div><div className="brand">CSDL Lớp 11A2</div><div className="sub">THPT Cao Bá Quát – Quốc Oai</div></div></div>
+          <div className="who">{roleLabel}{me?' · '+me.ten:''}{restrictToTo?' · Tổ '+me.to:''} <button onClick={()=>{setErr('');openModal({type:'changePassword'});}}>🔑 Đổi MK</button> <button onClick={logout}>Đăng xuất</button></div>
+        </div>
+        {!(session.role==='hs' || session.role==='ph') && <div className="top2"><div className="tabs">
+          <div className={"tab "+(tab==='list'?'active':'')} onClick={()=>setTab('list')}>📋 1. Hồ sơ học sinh</div>
+          {canLog && <div className={"tab "+(tab==='att'?'active':'')} onClick={()=>setTab('att')}>✅ 2. Điểm danh</div>}
+          <div className={"tab "+(tab==='td'?'active':'')} onClick={()=>setTab('td')}>🏆 3. Thi đua</div>
+          <div className={"tab "+(tab==='tk'?'active':'')} onClick={()=>setTab('tk')}>📊 4. Tổng kết</div>
+          {canEditRoster && <div className={"tab "+(tab==='acc'?'active':'')} onClick={()=>setTab('acc')}>🔐 5. Quản lý tài khoản</div>}
+        </div></div>}
       </div>
       <div className="wrap">
         {(session.role==='hs' || session.role==='ph') ? (
           me ? <><StudentSelf s={me} violations={violations} attendance={attendance}/><ThiDuaTab students={students} violations={violations} view="week" canLog={false} weeks={weeks} isAdmin={false}/></> : <p>Không tìm thấy thông tin.</p>
         ) : (
           <>
-            <div className="tabs">
-              <div className={"tab "+(tab==='list'?'active':'')} onClick={()=>setTab('list')}>📋 1. Hồ sơ học sinh</div>
-              {canLog && <div className={"tab "+(tab==='att'?'active':'')} onClick={()=>setTab('att')}>✅ 2. Điểm danh</div>}
-              <div className={"tab "+(tab==='td'?'active':'')} onClick={()=>setTab('td')}>🏆 3. Thi đua</div>
-              <div className={"tab "+(tab==='tk'?'active':'')} onClick={()=>setTab('tk')}>📊 4. Tổng kết</div>
-              {canEditRoster && <div className={"tab "+(tab==='acc'?'active':'')} onClick={()=>setTab('acc')}>🔐 5. Quản lý tài khoản</div>}
-            </div>
             {tab==='td' && <div className="tabs sub">
-              <div className={"tab "+(tdView==='week'?'active':'')} onClick={()=>setTdView('week')}>📝 3.1 Nhập thi đua theo tuần</div>
-              <div className={"tab "+(tdView==='month'?'active':'')} onClick={()=>setTdView('month')}>📅 3.2 Tổng kết thi đua tháng</div>
+              <div className={"tab "+(tdView==='rules'?'active':'')} onClick={()=>setTdView('rules')}>📕 3.1 Danh mục lỗi</div>
+              <div className={"tab "+(tdView==='week'?'active':'')} onClick={()=>setTdView('week')}>📝 3.2 Nhập thi đua theo tuần</div>
+              <div className={"tab "+(tdView==='month'?'active':'')} onClick={()=>setTdView('month')}>📅 3.3 Tổng kết thi đua tháng</div>
             </div>}
             {tab==='tk' && <div className="tabs sub">
               <div className={"tab "+(tkView==='month'?'active':'')} onClick={()=>setTkView('month')}>🗓️ 4.1 Tổng kết theo tháng</div>
@@ -631,7 +690,8 @@ function App(){
                 />
             }
             {tab==='att' && canLog && <AttendanceTab db={db} students={scopedStudents} attendance={attendance} session={session} onSaved={refresh}/>}
-            {tab==='td' && <ThiDuaTab students={scopedStudents} violations={violations} canLog={canLog} scopedMas={scopedMas} view={tdView} weeks={weeks} isAdmin={canEditRoster} onSaveWeeks={saveWeeks}
+            {tab==='td' && tdView==='rules' && <RulesTab rules={rulesList} isAdmin={canEditRoster} onSaveRules={saveRules}/>}
+            {tab==='td' && tdView!=='rules' && <ThiDuaTab students={scopedStudents} violations={violations} canLog={canLog} scopedMas={scopedMas} view={tdView} weeks={weeks} isAdmin={canEditRoster} onSaveWeeks={saveWeeks}
                 onAdd={(s,defDate)=>{setErr('');openModal({type:'logViolation',student:s,defaultDate:defDate});}}
                 onEditEntry={(v,s)=>{setErr('');openModal({type:'logViolation',student:s||{ten:v.ma,ma:v.ma},edit:v});}}
                 onDelEntry={delViolation}
@@ -641,7 +701,7 @@ function App(){
           </>
         )}
       </div>
-      <Modal key={modalSeq} modal={modal} err={err} onClose={()=>{setModal(null); setErr('');}} onSave={handleSave}/>
+      <Modal key={modalSeq} modal={modal} err={err} rules={rulesList} onClose={()=>{setModal(null); setErr('');}} onSave={handleSave}/>
       {toast && <div className="toast">{toast}</div>}
     </div>
   );
@@ -778,6 +838,53 @@ function AttendanceTab({db, students, attendance, session, onSaved}){
             </tr>;
           })}
         </tbody>
+      </table></div>
+    </div>
+  );
+}
+
+function RulesTab({rules, isAdmin, onSaveRules}){
+  const [rows,setRows] = useState(rules);
+  const [busy,setBusy] = useState(false);
+  useEffect(()=>{ setRows(rules); }, [rules]);
+  function setField(i,k,v){ setRows(rs=>rs.map((r,idx)=>idx===i?{...r,[k]:v}:r)); }
+  function nextCode(){
+    const nums = rows.map(r=>parseInt(r.code,10)).filter(n=>!isNaN(n));
+    const n = (nums.length?Math.max(...nums):0)+1;
+    return String(n).padStart(2,'0');
+  }
+  function addRule(){ setRows(rs=>[...rs, {code:nextCode(), text:'', diem:-10}]); }
+  function delRule(i){ setRows(rs=>rs.filter((_,idx)=>idx!==i)); }
+  async function save(){
+    setBusy(true);
+    try{ await onSaveRules(rows); } finally { setBusy(false); }
+  }
+  return (
+    <div className="card">
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+        <h3>Danh mục lỗi ghi nề nếp ({rows.length} mục)</h3>
+        {isAdmin && <div style={{display:'flex',gap:8}}>
+          <button className="btn sec" onClick={addRule}>+ Thêm lỗi</button>
+          <button className="btn" onClick={save} disabled={busy}>{busy?'Đang lưu…':'Lưu danh mục'}</button>
+        </div>}
+      </div>
+      {isAdmin && <p className="hint">Sửa trực tiếp mã, điểm, tên lỗi bên dưới rồi bấm "Lưu danh mục" — áp dụng ngay cho GVCN, CBL khi ghi nề nếp ở mọi tài khoản.</p>}
+      <div className="tbl-wrap"><table>
+        <thead><tr><th>Mã lỗi</th><th>Điểm</th><th>Tên lỗi</th>{isAdmin && <th></th>}</tr></thead>
+        <tbody>{rows.map((r,i)=>
+          <tr key={i}>
+            {isAdmin ? <>
+              <td><input style={{width:60}} value={r.code} onChange={e=>setField(i,'code',e.target.value)}/></td>
+              <td><input type="number" style={{width:80}} value={r.diem} onChange={e=>setField(i,'diem',parseInt(e.target.value,10)||0)}/></td>
+              <td><input value={r.text} onChange={e=>setField(i,'text',e.target.value)}/></td>
+              <td><button className="link" onClick={()=>delRule(i)}>Xoá</button></td>
+            </> : <>
+              <td>{r.code}</td>
+              <td style={{color:r.diem<0?'var(--bad)':'var(--good)'}}>{r.diem>0?'+':''}{r.diem}</td>
+              <td>{r.text}</td>
+            </>}
+          </tr>
+        )}</tbody>
       </table></div>
     </div>
   );
@@ -933,7 +1040,7 @@ function ThiDuaTab({students, violations, canLog, scopedMas, view, weeks, isAdmi
           <div className="tbl-wrap"><table>
             <thead><tr><th>Ngày</th><th>Học sinh</th><th>Tổ</th><th>Nội dung</th><th>Điểm</th><th>Ghi chú</th><th>Thao tác</th></tr></thead>
             <tbody>{weekEntriesF.length? weekEntriesF.map(v=>{ const st=students.find(x=>x.ma===v.ma); const dk=v.ma+'|'+v.text+'|'+v.date; const dup=entryCounts[dk]>1; return <tr key={v.id} style={dup?{background:'var(--amberbg)'}:undefined}>
-              <td>{viDate(v.date)}</td><td>{dup?'⚠️ ':''}{st?st.ten:v.ma}{dup?' ×'+entryCounts[dk]:''}</td><td>Tổ {st?.to??'-'}</td><td>{v.text}</td>
+              <td>{viDate(v.date)}</td><td>{dup?'⚠️ ':''}{st?st.ten:v.ma}{dup?' ×'+entryCounts[dk]:''}</td><td>Tổ {st?.to??'-'}</td><td>{v.text}{v.count>1?' (×'+v.count+' lần)':''}</td>
               <td style={{color:v.diem<0?'var(--bad)':'var(--good)'}}>{v.diem>0?'+':''}{v.diem}</td><td className="muted">{v.note||''}</td>
               <td><button className="link" onClick={()=>onEditEntry(v,st)}>Sửa</button> · <button className="link" onClick={()=>onDelEntry(v.id)}>Xoá</button></td>
             </tr>; }) : <tr><td colSpan="7" className="muted">Không có ghi nhận nào khớp bộ lọc.</td></tr>}</tbody>
@@ -1065,29 +1172,33 @@ function AccountsTab({students, db, onSaved}){
   }
   function exportPasswords(){
     const rows = students.map(s=>({
-      'STT': s.stt, 'Họ tên': s.ten, 'Mã định danh': s.ma, 'Chức vụ': CV_LABEL[s.chucvu]||'',
-      'Mật khẩu Học sinh (hiện tại)': s.pw_hs, 'Mật khẩu Phụ huynh (hiện tại)': s.pw_ph
+      'STT': s.stt, 'Họ tên': s.ten, 'Chức vụ': CV_LABEL[s.chucvu]||'',
+      'SĐT đăng nhập — Học sinh': s.sdt||'(chưa có)', 'Mật khẩu Học sinh (hiện tại)': s.pw_hs,
+      'SĐT đăng nhập — Phụ huynh': s.sdtcha||s.sdtme||s.sdt||'(chưa có)', 'Mật khẩu Phụ huynh (hiện tại)': s.pw_ph
     }));
-    exportXlsx(rows, 'mat_khau_tai_khoan_11A2.xlsx', 'Mat khau');
+    exportXlsx(rows, 'tai_khoan_dang_nhap_11A2.xlsx', 'Tai khoan');
   }
+  const noPhone = students.filter(s=>!s.sdt);
   return (
     <div className="card">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',gap:10}}>
         <h3>Quản lý tài khoản</h3>
         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
           <button className="btn sec" onClick={resetAdminPw}>Đặt lại MK GVCN mặc định</button>
-          <button className="btn sec" onClick={exportPasswords}>⬇️ Xuất Excel mật khẩu</button>
+          <button className="btn sec" onClick={exportPasswords}>⬇️ Xuất Excel tài khoản</button>
         </div>
       </div>
-      <p className="muted">Mật khẩu hiển thị dưới đây là mật khẩu HIỆN TẠI (kể cả khi tài khoản đã tự đổi). Bấm "Đặt lại mặc định" để trả về ngày sinh (học sinh) / SĐT liên hệ (phụ huynh).</p>
+      <p className="muted">Tên đăng nhập là <b>số điện thoại liên hệ</b> (học sinh/CBL dùng SĐT liên hệ; phụ huynh dùng SĐT cha, mẹ hoặc SĐT liên hệ — số nào đã lưu trong hồ sơ đều đăng nhập được). Mật khẩu hiển thị dưới đây là mật khẩu HIỆN TẠI. Bấm "Đặt lại mặc định" để trả về ngày sinh (học sinh) / SĐT liên hệ (phụ huynh).</p>
+      {noPhone.length>0 && <p className="err">⚠️ {noPhone.length} học sinh chưa có SĐT liên hệ ({noPhone.map(s=>s.ten).join(', ')}) — các em này chưa đăng nhập được bằng số điện thoại, vào "Sửa hồ sơ" để bổ sung.</p>}
       <div className="tbl-wrap"><table>
-        <thead><tr><th>STT</th><th>Họ tên</th><th>Chức vụ</th><th>MK Học sinh</th><th>MK Phụ huynh</th><th>Thao tác</th></tr></thead>
+        <thead><tr><th>STT</th><th>Họ tên</th><th>Chức vụ</th><th>SĐT đăng nhập (HS)</th><th>MK Học sinh</th><th>SĐT đăng nhập (PH)</th><th>MK Phụ huynh</th><th>Thao tác</th></tr></thead>
         <tbody>{students.map(s=>{
           const defHs = (s.ngaysinh||'').replace(/\//g,'') || '123456';
           const defPh = s.sdt || '123456';
           return <tr key={s.ma}>
             <td>{s.stt}</td><td>{s.ten}</td><td>{CV_LABEL[s.chucvu]||'-'}</td>
-            <td>{s.pw_hs}</td><td>{s.pw_ph}</td>
+            <td>{s.sdt||<span className="muted">chưa có</span>}</td><td>{s.pw_hs}</td>
+            <td>{s.sdtcha||s.sdtme||s.sdt||<span className="muted">chưa có</span>}</td><td>{s.pw_ph}</td>
             <td style={{whiteSpace:'nowrap'}}>
               <button className="link" disabled={busy===s.ma+'pw_hs'} onClick={()=>resetPw(s.ma,'pw_hs',defHs)}>Đặt lại MK HS</button>
               {' · '}

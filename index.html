@@ -27,22 +27,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/12.3.0/firebase-firestore-compat.min.js"></script>
 <style>
 :root{
-  --ink:#1c2333; --ink2:#3d4560; --paper:#f5f3ee; --card:#ffffff;
-  --line:#e4ddd4; --navy:#7a1733; --navy2:#9c2847; --maroon:#7a1733; --maroon2:#5c1227; --amber:#c8862b;
+  --ink:#1c2333; --ink2:#3d4560; --paper:#f1f3f6; --card:#ffffff;
+  --line:#cfd8e3; --navy:#2f6690; --navy2:#3f7fae; --maroon:#7a1733; --maroon2:#5c1227; --amber:#c8862b;
   --amberbg:#fbeedc; --good:#2f7d4f; --bad:#b2402d; --shadow:rgba(28,35,51,.1);
   padding-top: env(safe-area-inset-top,0px); padding-bottom: env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){--ink:#eae7dd;--ink2:#c3c2ba;--paper:#171a20;--card:#1f232b;--line:#333844;--navy:#c4607f;--navy2:#d98aa3;--maroon:#7a1733;--maroon2:#5c1227;--amber:#e0a955;--amberbg:#3a2f1c;--shadow:rgba(0,0,0,.35);}
+  :root:not([data-theme="light"]){--ink:#eae7dd;--ink2:#c3c2ba;--paper:#171a20;--card:#1f232b;--line:#333844;--navy:#6ea3cc;--navy2:#8fb9db;--maroon:#c4607f;--maroon2:#9c2847;--amber:#e0a955;--amberbg:#3a2f1c;--shadow:rgba(0,0,0,.35);}
 }
-:root[data-theme="dark"]{--ink:#eae7dd;--ink2:#c3c2ba;--paper:#171a20;--card:#1f232b;--line:#333844;--navy:#c4607f;--navy2:#d98aa3;--maroon:#7a1733;--maroon2:#5c1227;--amber:#e0a955;--amberbg:#3a2f1c;--shadow:rgba(0,0,0,.35);}
+:root[data-theme="dark"]{--ink:#eae7dd;--ink2:#c3c2ba;--paper:#171a20;--card:#1f232b;--line:#333844;--navy:#6ea3cc;--navy2:#8fb9db;--maroon:#c4607f;--maroon2:#9c2847;--amber:#e0a955;--amberbg:#3a2f1c;--shadow:rgba(0,0,0,.35);}
 *{box-sizing:border-box}
 html,body,#root{height:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:'Be Vietnam Pro',-apple-system,"Segoe UI",Roboto,Arial,sans-serif;}
 h1,h2,h3{font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-weight:600;margin:0 0 4px}
 .wrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
-.top1{background:linear-gradient(90deg,var(--maroon2),var(--maroon) 55%,var(--navy2));color:#fff;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.top1{background:linear-gradient(90deg,var(--maroon2),var(--maroon) 65%,var(--maroon));color:#fff;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .top1 .brandwrap{display:flex;align-items:center;gap:10px;min-width:0}
 .top1 .logo{font-size:22px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
 .top1 .brand{font-family:'Noto Serif',Georgia,serif;font-size:16px;font-weight:700;letter-spacing:.02em;color:var(--amber);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -62,11 +62,11 @@ h1,h2,h3{font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-weight:60
 .tabs.sub{margin-top:2px;background:var(--paper);border-radius:9px;padding:4px;display:inline-flex}
 .tabs.sub .tab{font-size:12px;padding:6px 12px;border-radius:6px;border-bottom:none}
 .tabs.sub .tab.active{background:var(--card);box-shadow:0 1px 3px var(--shadow);border-bottom:none}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
-th{color:var(--ink2);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.02em}
-tbody tr:nth-child(even) td{background:rgba(0,0,0,.015)}
-tr:hover td{background:rgba(35,49,80,.05)}
+table{width:100%;border-collapse:collapse;font-size:13px;border:1px solid var(--line)}
+th,td{text-align:left;padding:8px 10px;border:1px solid var(--line);white-space:nowrap}
+th{color:#fff;background:linear-gradient(180deg,var(--navy2),var(--navy));font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;position:sticky;top:0}
+tbody tr:nth-child(even) td{background:rgba(47,102,144,.04)}
+tr:hover td{background:rgba(47,102,144,.1)}
 .tbl-wrap{overflow-x:auto}
 .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600}
 .pill.good{background:#e4f2e8;color:var(--good)}
@@ -126,6 +126,7 @@ label{font-size:12px;color:var(--ink2);display:block;margin-bottom:3px}
 .err{color:var(--bad);font-size:12.5px;margin-top:4px}
 .actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
 .hint{font-size:12px;color:var(--ink2);margin-top:2px}
+.secnum{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:var(--navy);color:#fff;border-radius:5px;font-family:'Be Vietnam Pro',sans-serif;font-size:12px;font-weight:700;margin-right:7px;vertical-align:middle}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--good);color:#fff;padding:11px 20px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:60;font-size:13.5px;font-weight:600;max-width:90vw;text-align:center}
 </style>
 </head>
@@ -195,11 +196,43 @@ const CV_LABEL = {lop_truong:'Lớp trưởng', bi_thu:'Bí thư', to_truong:'T�
 const CV_LABEL_REV = {'Lớp trưởng':'lop_truong', 'Bí thư':'bi_thu', 'Tổ trưởng':'to_truong'};
 function viDate(iso){ if(!iso) return ''; const p=String(iso).split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : iso; }
 function viMonth(ym){ if(!ym) return ''; const p=ym.split('-'); return p.length===2 ? 'Tháng '+parseInt(p[1],10)+'/'+p[0] : ym; }
-function exportXlsx(rows, filename, sheetName){
-  const ws = XLSX.utils.json_to_sheet(rows);
+const SCHOOL_NAME = 'TRƯỜNG THPT CAO BÁ QUÁT - QUỐC OAI';
+const CLASS_NAME = 'LỚP 11A2';
+const THIN = {style:'thin', color:{rgb:'B0B0B0'}};
+const BORDER_ALL = {top:THIN, bottom:THIN, left:THIN, right:THIN};
+// title: tên nội dung file (VD "THI ĐUA TUẦN 1"); dateRange: [tuNgay, denNgay] dạng dd/mm/yyyy (tuỳ chọn)
+function exportXlsx(rows, filename, sheetName, title, dateRange){
+  const cols = rows.length ? Object.keys(rows[0]) : [];
+  const ncols = Math.max(cols.length, 1);
+  const head = [[SCHOOL_NAME],[CLASS_NAME],['NỘI DUNG FILE: '+(title||sheetName||'').toUpperCase()]];
+  if(dateRange && dateRange[0] && dateRange[1]) head.push(['(Từ ngày '+dateRange[0]+' đến ngày '+dateRange[1]+')']);
+  head.push([]);
+  const headerRowCount = head.length; // số dòng tiêu đề (0-indexed: dòng dữ liệu bắt đầu từ đây)
+  const ws = XLSX.utils.aoa_to_sheet(head);
+  XLSX.utils.sheet_add_json(ws, rows, {origin:{r:headerRowCount, c:0}});
+  const lastDataRow = headerRowCount + rows.length;
+  ws['!merges'] = [0,1,2,3].slice(0, head.length-1).map(r=>({s:{r,c:0}, e:{r,c:ncols-1}}));
+  ws['!cols'] = cols.map(c=>({wch: Math.min(40, Math.max(10, String(c).length+2, ...rows.map(row=>String(row[c]??'').length+2)))}));
+  ws['!margins'] = {left:0.4, right:0.4, top:0.5, bottom:0.4, header:0.2, footer:0.2};
+  try{
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for(let R=range.s.r; R<=range.e.r; R++){
+      for(let C=range.s.c; C<=range.e.c; C++){
+        const addr = XLSX.utils.encode_cell({r:R,c:C});
+        if(!ws[addr]) ws[addr] = {t:'s', v:''};
+        if(R<head.length-1){
+          ws[addr].s = {font:{bold:true, sz:R===0?13:11.5}, alignment:{horizontal:'center', vertical:'center'}};
+        } else if(R===headerRowCount){
+          ws[addr].s = {font:{bold:true, color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'2F6690'}}, alignment:{horizontal:'center', vertical:'center', wrapText:true}, border:BORDER_ALL};
+        } else if(R<lastDataRow){
+          ws[addr].s = {border:BORDER_ALL, alignment:{vertical:'center'}};
+        }
+      }
+    }
+  }catch(e){}
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheetName||'Sheet1');
-  XLSX.writeFile(wb, filename);
+  XLSX.utils.book_append_sheet(wb, ws, (sheetName||'Sheet1').slice(0,31));
+  XLSX.writeFile(wb, filename, {cellStyles:true});
 }
 async function importStudentsXlsx(file, db, onDone){
   const buf = await file.arrayBuffer();
@@ -722,7 +755,7 @@ function Roster({students, canEditRoster, onAdd, onEdit, onDel, onView, onQuickC
       'STT': s.stt, 'Mã định danh': s.ma, 'Họ và tên': s.ten, 'Ngày sinh': s.ngaysinh, 'Giới tính': s.gioitinh,
       'Tổ': s.to, 'SĐT liên hệ': s.sdt, 'Chức vụ': CV_LABEL[s.chucvu]||'', 'Dân tộc': s.dantoc, 'Trạng thái': s.trangthai
     }));
-    exportXlsx(rows, 'ho_so_hoc_sinh_11A2.xlsx', 'Ho so');
+    exportXlsx(rows, 'ho_so_hoc_sinh_11A2.xlsx', 'Ho so', 'HỒ SƠ HỌC SINH');
   }
 
   async function handleFile(e){
@@ -734,7 +767,7 @@ function Roster({students, canEditRoster, onAdd, onEdit, onDel, onView, onQuickC
   return (
     <div className="card">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',gap:10}}>
-        <h3>Hồ sơ học sinh ({filtered.length}/{students.length})</h3>
+        <h3><span className="secnum">1</span>Hồ sơ học sinh ({filtered.length}/{students.length})</h3>
         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
           <input placeholder="🔍 Tìm tên, mã, tổ…" style={{width:'100%',maxWidth:220,minWidth:140}} value={q} onChange={e=>setQ(e.target.value)}/>
           <button className="btn sec" onClick={exportExcel}>⬇️ Xuất Excel</button>
@@ -814,11 +847,11 @@ function AttendanceTab({db, students, attendance, session, onSaved}){
   return (
     <div className="card">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
-        <h3>Điểm danh chuyên cần — {viDate(date)}</h3>
+        <h3><span className="secnum">2</span>Điểm danh chuyên cần — {viDate(date)}</h3>
         <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
           <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:180,minWidth:120}} value={q} onChange={e=>setQ(e.target.value)}/>
           <input type="date" style={{width:'auto'}} value={date} onChange={e=>setDate(e.target.value)}/>
-          <button className="btn sec" onClick={()=>exportXlsx(filtered.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Trạng thái':attInfo(statusOf(s.ma)).label})), 'diem_danh_'+date+'.xlsx', 'Diem danh')}>⬇️ Xuất Excel</button>
+          <button className="btn sec" onClick={()=>exportXlsx(filtered.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Trạng thái':attInfo(statusOf(s.ma)).label})), 'diem_danh_'+date+'.xlsx', 'Diem danh', 'ĐIỂM DANH NGÀY '+viDate(date))}>⬇️ Xuất Excel</button>
           <button className="btn" onClick={save} disabled={saving}>{saving?'Đang lưu…':'Lưu điểm danh'}</button>
         </div>
       </div>
@@ -862,7 +895,7 @@ function RulesTab({rules, isAdmin, onSaveRules}){
   return (
     <div className="card">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
-        <h3>Danh mục lỗi ghi nề nếp ({rows.length} mục)</h3>
+        <h3><span className="secnum">3.1</span>Danh mục lỗi ghi nề nếp ({rows.length} mục)</h3>
         {isAdmin && <div style={{display:'flex',gap:8}}>
           <button className="btn sec" onClick={addRule}>+ Thêm lỗi</button>
           <button className="btn" onClick={save} disabled={busy}>{busy?'Đang lưu…':'Lưu danh mục'}</button>
@@ -994,7 +1027,7 @@ function ThiDuaTab({students, violations, canLog, scopedMas, view, weeks, isAdmi
   return (
     <div className="card">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
-        <h3>{view==='week'?'Nhập thi đua theo tuần':'Tổng kết thi đua tháng'} — {view==='week' ? ('Tuần '+week+(wr?' ('+viDate(wr.start)+' – '+viDate(wr.end)+')':'')) : viMonth(month)}</h3>
+        <h3><span className="secnum">{view==='week'?'3.2':'3.3'}</span>{view==='week'?'Nhập thi đua theo tuần':'Tổng kết thi đua tháng'} — {view==='week' ? ('Tuần '+week+(wr?' ('+viDate(wr.start)+' – '+viDate(wr.end)+')':'')) : viMonth(month)}</h3>
         <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
           <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:160,minWidth:110}} value={q} onChange={e=>setQ(e.target.value)}/>
           <select style={{width:'auto'}} value={toF} onChange={e=>setToF(e.target.value)}>
@@ -1007,8 +1040,8 @@ function ThiDuaTab({students, violations, canLog, scopedMas, view, weeks, isAdmi
               </select>
             : <input type="month" style={{width:'auto'}} value={month} onChange={e=>setMonth(e.target.value)}/>}
           <button className="btn sec" onClick={()=>{
-            if(view==='week') exportXlsx(weekRowsF.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Điểm tuần':s.score,'Xếp loại':xlRank(s.score).label,'Hạng':s.rank})), 'thi_dua_tuan'+week+'.xlsx', 'Tuan '+week);
-            else exportXlsx(monthRowsF.map(s=>{ const o={'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to}; s.ws.forEach((v,i)=>o['Tuần '+(monthWeekNums[i])]=v); o['TB tháng']=s.avg.toFixed(1); o['Xếp loại']=xlRank(s.avg).label; o['Hạng']=s.rank; o['Tăng bậc']=bacText(bacValue(prevMap,s.ma,s.rank)); return o; }), 'thi_dua_thang_'+month+'.xlsx', 'Thang');
+            if(view==='week') exportXlsx(weekRowsF.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Điểm tuần':s.score,'Xếp loại':xlRank(s.score).label,'Hạng':s.rank})), 'thi_dua_tuan'+week+'.xlsx', 'Tuan '+week, 'THI ĐUA TUẦN '+week, wr?[viDate(wr.start),viDate(wr.end)]:null);
+            else exportXlsx(monthRowsF.map(s=>{ const o={'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to}; s.ws.forEach((v,i)=>o['Tuần '+(monthWeekNums[i])]=v); o['TB tháng']=s.avg.toFixed(1); o['Xếp loại']=xlRank(s.avg).label; o['Hạng']=s.rank; o['Tăng bậc']=bacText(bacValue(prevMap,s.ma,s.rank)); return o; }), 'thi_dua_thang_'+month+'.xlsx', 'Thang', 'TỔNG KẾT THI ĐUA '+viMonth(month).toUpperCase());
           }}>⬇️ Xuất Excel</button>
         </div>
       </div>
@@ -1108,7 +1141,7 @@ function SummaryTab({students, violations, attendance, view, weeks}){
 
   function doExport(){
     if(view==='month'){
-      exportXlsx(monthRowsF.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Điểm TB':s.avg.toFixed(1),'Xếp loại':xlRank(s.avg).label,'Hạng':s.rank,'Tăng bậc':bacText(bacValue(prevMap,s.ma,s.rank)),'Vắng phép':s.vp,'Vắng không phép':s.vk,'Đi muộn':s.muon})), 'tong_ket_thang_'+month+'.xlsx', 'Tong ket thang');
+      exportXlsx(monthRowsF.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Điểm TB':s.avg.toFixed(1),'Xếp loại':xlRank(s.avg).label,'Hạng':s.rank,'Tăng bậc':bacText(bacValue(prevMap,s.ma,s.rank)),'Vắng phép':s.vp,'Vắng không phép':s.vk,'Đi muộn':s.muon})), 'tong_ket_thang_'+month+'.xlsx', 'Tong ket thang', 'TỔNG KẾT THÁNG '+viMonth(month).toUpperCase());
     } else {
       exportXlsx(semRowsF.map(s=>{
         const o={'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to};
@@ -1116,14 +1149,14 @@ function SummaryTab({students, violations, attendance, view, weeks}){
         o['ĐTB học kỳ']=s.avg.toFixed(1); o['Xếp loại']=xlRank(s.avg).label; o['Hạng']=s.rank;
         o['Vắng phép']=s.vp; o['Vắng không phép']=s.vk; o['Đi muộn']=s.muon;
         return o;
-      }), 'tong_ket_'+sem+'.xlsx', 'Tong ket hoc ky');
+      }), 'tong_ket_'+sem+'.xlsx', 'Tong ket hoc ky', 'TỔNG KẾT HỌC KỲ '+(sem==='HK1'?'1':'2'));
     }
   }
 
   return (
     <div className="card">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
-        <h3>{view==='month'?'Tổng kết theo tháng — '+viMonth(month):'Tổng kết học kỳ — '+(sem==='HK1'?'Học kỳ 1':'Học kỳ 2')}</h3>
+        <h3><span className="secnum">{view==='month'?'4.1':'4.2'}</span>{view==='month'?'Tổng kết theo tháng — '+viMonth(month):'Tổng kết học kỳ — '+(sem==='HK1'?'Học kỳ 1':'Học kỳ 2')}</h3>
         <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
           {view==='month'
             ? <input type="month" style={{width:'auto'}} value={month} onChange={e=>setMonth(e.target.value)}/>
@@ -1176,13 +1209,13 @@ function AccountsTab({students, db, onSaved}){
       'SĐT đăng nhập — Học sinh': s.sdt||'(chưa có)', 'Mật khẩu Học sinh (hiện tại)': s.pw_hs,
       'SĐT đăng nhập — Phụ huynh': s.sdtcha||s.sdtme||s.sdt||'(chưa có)', 'Mật khẩu Phụ huynh (hiện tại)': s.pw_ph
     }));
-    exportXlsx(rows, 'tai_khoan_dang_nhap_11A2.xlsx', 'Tai khoan');
+    exportXlsx(rows, 'tai_khoan_dang_nhap_11A2.xlsx', 'Tai khoan', 'DANH SÁCH TÀI KHOẢN ĐĂNG NHẬP');
   }
   const noPhone = students.filter(s=>!s.sdt);
   return (
     <div className="card">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',gap:10}}>
-        <h3>Quản lý tài khoản</h3>
+        <h3><span className="secnum">5</span>Quản lý tài khoản</h3>
         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
           <button className="btn sec" onClick={resetAdminPw}>Đặt lại MK GVCN mặc định</button>
           <button className="btn sec" onClick={exportPasswords}>⬇️ Xuất Excel tài khoản</button>

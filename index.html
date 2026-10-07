@@ -192,6 +192,72 @@ const ATT_STATUS = [
   {code:'absent_k', label:'Vắng không phép', cls:'bad'},
 ];
 function attInfo(code){ return ATT_STATUS.find(a=>a.code===code) || ATT_STATUS[0]; }
+function attCountBetween(attendance, ma, from, to, code){
+  return attendance.filter(a=>a.ma===ma && a.date>=from && a.date<=to && a.status===code).length;
+}
+// Xuất Excel đúng mẫu "CHUYÊN CẦN HỌC SINH THÁNG N" của Sở GD&ĐT (lưới ngày trong tháng + TS/CP/KP)
+function exportAttendanceMonthTemplate(students, attendance, monthStr){
+  const [y,m] = monthStr.split('-').map(Number);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const DOW = ['CN','T2','T3','T4','T5','T6','T7'];
+  const dayNums = [], dayDOW = [];
+  for(let d=1; d<=daysInMonth; d++){ dayNums.push(d); dayDOW.push(DOW[new Date(y,m-1,d).getDay()]); }
+  const totalCols = 3 + daysInMonth + 1 + 3; // STT,Họ tên,Ngày sinh + ngày + 1 cột đệm + TS/CP/KP
+
+  const aoa = [];
+  aoa.push(['Sở Giáo dục và Đào tạo Hà Nội']);
+  aoa.push(['Trường: THPT Cao Bá Quát-Quốc Oai']);
+  aoa.push(['CHUYÊN CẦN HỌC SINH THÁNG '+m]);
+  aoa.push(['NĂM HỌC: 2026-2027, LỚP: 11A2']);
+  aoa.push([]);
+  const row6 = ['Số \nTT','Họ tên ','Ngày sinh','NGÀY TRONG THÁNG '+m];
+  for(let i=1;i<daysInMonth;i++) row6.push(null);
+  row6.push(null);
+  row6.push('Tổng số\n buổi nghỉ'); row6.push(null); row6.push(null);
+  aoa.push(row6);
+  aoa.push(['','','', ...dayNums, '', '', '', '']);
+  aoa.push(['','','', ...dayDOW, '', 'TS ', 'CP', 'KP']);
+  students.forEach(s=>{
+    const row = [s.stt, s.ten, s.ngaysinh];
+    let cp=0, kp=0;
+    for(let d=1; d<=daysInMonth; d++){
+      const dateStr = y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      const rec = attendance.find(a=>a.ma===s.ma && a.date===dateStr);
+      if(rec && rec.status==='absent_p'){ row.push('P'); cp++; }
+      else if(rec && rec.status==='absent_k'){ row.push('K'); kp++; }
+      else row.push('');
+    }
+    row.push(''); row.push(cp+kp); row.push(cp); row.push(kp);
+    aoa.push(row);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const tsCol = 3+daysInMonth+1;
+  ws['!merges'] = [
+    {s:{r:0,c:0},e:{r:0,c:2}}, {s:{r:1,c:0},e:{r:1,c:2}},
+    {s:{r:2,c:0},e:{r:2,c:totalCols-1}}, {s:{r:3,c:0},e:{r:3,c:totalCols-1}},
+    {s:{r:5,c:0},e:{r:7,c:0}}, {s:{r:5,c:1},e:{r:7,c:1}}, {s:{r:5,c:2},e:{r:7,c:2}},
+    {s:{r:5,c:3},e:{r:5,c:3+daysInMonth}},
+    {s:{r:5,c:tsCol},e:{r:6,c:tsCol+2}},
+  ];
+  ws['!cols'] = [{wch:6},{wch:24},{wch:11}, ...Array(daysInMonth).fill({wch:3.2}), {wch:2}, {wch:5},{wch:5},{wch:5}];
+  ws['!margins'] = {left:0.3, right:0.3, top:0.4, bottom:0.3, header:0.2, footer:0.2};
+  try{
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for(let R=range.s.r; R<=range.e.r; R++){
+      for(let C=range.s.c; C<=range.e.c; C++){
+        const addr = XLSX.utils.encode_cell({r:R,c:C});
+        if(!ws[addr]) ws[addr] = {t:'s', v:''};
+        if(R<=3){ ws[addr].s = {font:{bold:true, sz:R===2?13:11}, alignment:{horizontal:R>=2?'center':'left'}}; }
+        else if(R>=5 && R<=7){ ws[addr].s = {font:{bold:true, sz:9}, fill:{fgColor:{rgb:'2F6690'}}, color:{rgb:'FFFFFF'}, alignment:{horizontal:'center', vertical:'center', wrapText:true}, border:BORDER_ALL}; }
+        else if(R>=8){ ws[addr].s = {border:BORDER_ALL, alignment:{horizontal:'center', vertical:'center'}, font:{sz:10}}; if(C===1) ws[addr].s.alignment.horizontal='left'; }
+      }
+    }
+  }catch(e){}
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Thang '+m);
+  XLSX.writeFile(wb, 'chuyen_can_thang_'+m+'.xlsx', {cellStyles:true});
+}
 const CV_LABEL = {lop_truong:'Lớp trưởng', bi_thu:'Bí thư', to_truong:'Tổ trưởng', '':''};
 const CV_LABEL_REV = {'Lớp trưởng':'lop_truong', 'Bí thư':'bi_thu', 'Tổ trưởng':'to_truong'};
 function viDate(iso){ if(!iso) return ''; const p=String(iso).split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : iso; }
@@ -384,13 +450,13 @@ function Login({db, onLogin}){
           <div className="rolecard" onClick={()=>choose('admin')}><b>Giáo viên chủ nhiệm</b><span>Toàn quyền: thêm/sửa/xoá học sinh, điểm danh, ghi lỗi, phân công cán bộ lớp.</span></div>
           <div className="rolecard" onClick={()=>choose('cb')}><b>Cán bộ lớp</b><span>Lớp trưởng, Bí thư (toàn lớp) hoặc Tổ trưởng (riêng tổ mình) — quản lý điểm danh và ghi lỗi nề nếp.</span></div>
           <div className="rolecard" onClick={()=>choose('hs')}><b>Học sinh</b><span>Xem thông tin và kết quả nề nếp của bản thân.</span></div>
-          <div className="rolecard" onClick={()=>choose('ph')}><b>Phụ huynh</b><span>Theo dõi chuyên cần và nề nếp của con.</span></div>
+          <div className="rolecard" onClick={()=>choose('ph')}><b>Cha mẹ học sinh</b><span>Theo dõi chuyên cần và nề nếp của con.</span></div>
         </div>
         {picking && (
           <div className="card" style={{maxWidth:420,margin:'22px auto 0',textAlign:'left'}}>
             {picking!=='admin' && (students.length ? (
               <>
-                <label>{picking==='ph'?'Số điện thoại phụ huynh (cha, mẹ hoặc liên hệ)':'Số điện thoại liên hệ của bạn'}</label>
+                <label>{picking==='ph'?'Số điện thoại Cha mẹ học sinh (cha, mẹ hoặc liên hệ)':'Số điện thoại liên hệ của bạn'}</label>
                 <input type="tel" inputMode="numeric" placeholder="VD: 0912345678" value={phone} onChange={e=>setPhone(e.target.value)}/>
               </>
             ) : <p className="hint">Giáo viên chưa phân công cán bộ lớp nào. Vui lòng liên hệ GVCN.</p>)}
@@ -542,6 +608,7 @@ function App(){
   const [attendance,setAttendance] = useState([]);
   const [tab,setTab] = useState('list');
   const [tdView,setTdView] = useState('week');
+  const [attView,setAttView] = useState('day');
   const [tkView,setTkView] = useState('month');
   const [modal,setModal] = useState(null);
   const [modalSeq,setModalSeq] = useState(0);
@@ -677,7 +744,7 @@ function App(){
   const me = session.ma ? students.find(s=>s.ma===session.ma) : null;
   const meChucvu = me ? me.chucvu : null;
   const restrictToTo = session.role==='cb' && meChucvu==='to_truong';
-  const roleLabel = session.role==='admin'?'Giáo viên chủ nhiệm': session.role==='cb'?(CV_LABEL[meChucvu]||'Cán bộ lớp'): session.role==='ph'?'Phụ huynh':'Học sinh';
+  const roleLabel = session.role==='admin'?'Giáo viên chủ nhiệm': session.role==='cb'?(CV_LABEL[meChucvu]||'Cán bộ lớp'): session.role==='ph'?'Cha mẹ học sinh':'Học sinh';
   const canEditRoster = session.role==='admin';
   const canLog = session.role==='admin' || session.role==='cb';
   const scopedStudents = restrictToTo ? students.filter(s=>s.to===me.to) : students;
@@ -701,9 +768,15 @@ function App(){
       </div>
       <div className="wrap">
         {(session.role==='hs' || session.role==='ph') ? (
-          me ? <><StudentSelf s={me} violations={violations} attendance={attendance}/><ThiDuaTab students={students} violations={violations} view="week" canLog={false} weeks={weeks} isAdmin={false}/></> : <p>Không tìm thấy thông tin.</p>
+          me ? <><StudentSelf s={me} violations={violations} attendance={attendance} weeks={weeks}/><ThiDuaTab students={students} violations={violations} view="week" canLog={false} weeks={weeks} isAdmin={false}/></> : <p>Không tìm thấy thông tin.</p>
         ) : (
           <>
+            {tab==='att' && <div className="tabs sub">
+              <div className={"tab "+(attView==='day'?'active':'')} onClick={()=>setAttView('day')}>🗓️ 2.1 Điểm danh theo ngày</div>
+              <div className={"tab "+(attView==='month'?'active':'')} onClick={()=>setAttView('month')}>📆 2.2 Tổng hợp theo tháng</div>
+              <div className={"tab "+(attView==='sem'?'active':'')} onClick={()=>setAttView('sem')}>📚 2.3 Tổng hợp theo học kỳ</div>
+              <div className={"tab "+(attView==='year'?'active':'')} onClick={()=>setAttView('year')}>🏫 2.4 Tổng hợp năm học</div>
+            </div>}
             {tab==='td' && <div className="tabs sub">
               <div className={"tab "+(tdView==='rules'?'active':'')} onClick={()=>setTdView('rules')}>📕 3.1 Danh mục lỗi</div>
               <div className={"tab "+(tdView==='week'?'active':'')} onClick={()=>setTdView('week')}>📝 3.2 Nhập thi đua theo tuần</div>
@@ -722,7 +795,10 @@ function App(){
                   onQuickChucvu={quickChucvu}
                 />
             }
-            {tab==='att' && canLog && <AttendanceTab db={db} students={scopedStudents} attendance={attendance} session={session} onSaved={refresh}/>}
+            {tab==='att' && canLog && attView==='day' && <AttendanceTab db={db} students={scopedStudents} attendance={attendance} session={session} onSaved={refresh}/>}
+            {tab==='att' && attView==='month' && <AttMonthTab students={scopedStudents} attendance={attendance}/>}
+            {tab==='att' && attView==='sem' && <AttSemTab students={scopedStudents} attendance={attendance}/>}
+            {tab==='att' && attView==='year' && <AttYearTab students={scopedStudents} attendance={attendance}/>}
             {tab==='td' && tdView==='rules' && <RulesTab rules={rulesList} isAdmin={canEditRoster} onSaveRules={saveRules}/>}
             {tab==='td' && tdView!=='rules' && <ThiDuaTab students={scopedStudents} violations={violations} canLog={canLog} scopedMas={scopedMas} view={tdView} weeks={weeks} isAdmin={canEditRoster} onSaveWeeks={saveWeeks}
                 onAdd={(s,defDate)=>{setErr('');openModal({type:'logViolation',student:s,defaultDate:defDate});}}
@@ -847,13 +923,13 @@ function AttendanceTab({db, students, attendance, session, onSaved}){
   return (
     <div className="card">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
-        <h3><span className="secnum">2</span>Điểm danh chuyên cần — {viDate(date)}</h3>
-        <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
-          <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:180,minWidth:120}} value={q} onChange={e=>setQ(e.target.value)}/>
-          <input type="date" style={{width:'auto'}} value={date} onChange={e=>setDate(e.target.value)}/>
-          <button className="btn sec" onClick={()=>exportXlsx(filtered.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Trạng thái':attInfo(statusOf(s.ma)).label})), 'diem_danh_'+date+'.xlsx', 'Diem danh', 'ĐIỂM DANH NGÀY '+viDate(date))}>⬇️ Xuất Excel</button>
-          <button className="btn" onClick={save} disabled={saving}>{saving?'Đang lưu…':'Lưu điểm danh'}</button>
-        </div>
+        <h3 style={{margin:0}}><span className="secnum">2.1</span>Điểm danh theo ngày — {viDate(date)}</h3>
+        <button className="btn" onClick={save} disabled={saving} style={{flexShrink:0}}>{saving?'Đang lưu…':'💾 Lưu điểm danh'}</button>
+      </div>
+      <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap',marginBottom:10}}>
+        <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:180,minWidth:120}} value={q} onChange={e=>setQ(e.target.value)}/>
+        <input type="date" style={{width:'auto'}} value={date} onChange={e=>setDate(e.target.value)}/>
+        <button className="btn sec" onClick={()=>exportXlsx(filtered.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Trạng thái':attInfo(statusOf(s.ma)).label})), 'diem_danh_'+date+'.xlsx', 'Diem danh', 'ĐIỂM DANH NGÀY '+viDate(date))}>⬇️ Xuất Excel</button>
       </div>
       {attErr && <div className="err" style={{marginBottom:8}}>{attErr}</div>}
       <div className="tbl-wrap"><table>
@@ -918,6 +994,97 @@ function RulesTab({rules, isAdmin, onSaveRules}){
             </>}
           </tr>
         )}</tbody>
+      </table></div>
+    </div>
+  );
+}
+
+function AttMonthTab({students, attendance}){
+  const now = new Date();
+  const [month,setMonth] = useState(now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'));
+  const [q,setQ] = useState('');
+  const [y,m] = month.split('-').map(Number);
+  const from = month+'-01', to = month+'-'+String(new Date(y,m,0).getDate()).padStart(2,'0');
+  const rows = useMemo(()=>students.map(s=>({...s,
+    cp: attCountBetween(attendance,s.ma,from,to,'absent_p'),
+    kp: attCountBetween(attendance,s.ma,from,to,'absent_k')
+  })), [students, attendance, from, to]);
+  const filtered = useMemo(()=>{ const k=q.trim().toLowerCase(); return k?rows.filter(s=>(s.ten||'').toLowerCase().includes(k)):rows; },[rows,q]);
+  return (
+    <div className="card">
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+        <h3><span className="secnum">2.2</span>Tổng hợp chuyên cần theo tháng — {viMonth(month)}</h3>
+        <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+          <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:170,minWidth:110}} value={q} onChange={e=>setQ(e.target.value)}/>
+          <input type="month" style={{width:'auto'}} value={month} onChange={e=>setMonth(e.target.value)}/>
+          <button className="btn sec" onClick={()=>exportAttendanceMonthTemplate(students, attendance, month)}>⬇️ Xuất Excel (đúng mẫu Sở GD&ĐT)</button>
+        </div>
+      </div>
+      <p className="hint">Giao diện chỉ hiện số buổi nghỉ; khi xuất Excel sẽ có đầy đủ lưới ngày trong tháng theo đúng mẫu báo cáo chính thức.</p>
+      <div className="tbl-wrap"><table>
+        <thead><tr><th>STT</th><th>Họ tên</th><th>Tổ</th><th>Vắng có phép</th><th>Vắng không phép</th><th>Tổng số buổi nghỉ</th></tr></thead>
+        <tbody>{filtered.map(s=><tr key={s.ma}><td>{s.stt}</td><td>{s.ten}</td><td>Tổ {s.to??'-'}</td><td>{s.cp}</td><td>{s.kp}</td><td><b>{s.cp+s.kp}</b></td></tr>)}</tbody>
+      </table></div>
+    </div>
+  );
+}
+
+function AttSemTab({students, attendance}){
+  const [sem,setSem] = useState('HK1');
+  const [q,setQ] = useState('');
+  const months = SEMESTERS[sem];
+  const from = months[0]+'-01';
+  const lastM = months[months.length-1];
+  const [ly,lm] = lastM.split('-').map(Number);
+  const to = lastM+'-'+String(new Date(ly,lm,0).getDate()).padStart(2,'0');
+  const rows = useMemo(()=>students.map(s=>({...s,
+    cp: attCountBetween(attendance,s.ma,from,to,'absent_p'),
+    kp: attCountBetween(attendance,s.ma,from,to,'absent_k')
+  })), [students, attendance, from, to]);
+  const filtered = useMemo(()=>{ const k=q.trim().toLowerCase(); return k?rows.filter(s=>(s.ten||'').toLowerCase().includes(k)):rows; },[rows,q]);
+  return (
+    <div className="card">
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+        <h3><span className="secnum">2.3</span>Tổng hợp chuyên cần theo học kỳ — {sem==='HK1'?'Học kỳ 1':'Học kỳ 2'}</h3>
+        <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+          <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:170,minWidth:110}} value={q} onChange={e=>setQ(e.target.value)}/>
+          <select style={{width:'auto'}} value={sem} onChange={e=>setSem(e.target.value)}>
+            <option value="HK1">Học kỳ 1</option><option value="HK2">Học kỳ 2</option>
+          </select>
+          <button className="btn sec" onClick={()=>exportXlsx(filtered.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Vắng có phép':s.cp,'Vắng không phép':s.kp,'Tổng số buổi nghỉ':s.cp+s.kp})), 'chuyen_can_'+sem+'.xlsx', 'Chuyen can '+sem, 'TỔNG HỢP CHUYÊN CẦN HỌC KỲ '+(sem==='HK1'?'1':'2'))}>⬇️ Xuất Excel</button>
+        </div>
+      </div>
+      <div className="tbl-wrap"><table>
+        <thead><tr><th>STT</th><th>Họ tên</th><th>Tổ</th><th>Vắng có phép</th><th>Vắng không phép</th><th>Tổng số buổi nghỉ</th></tr></thead>
+        <tbody>{filtered.map(s=><tr key={s.ma}><td>{s.stt}</td><td>{s.ten}</td><td>Tổ {s.to??'-'}</td><td>{s.cp}</td><td>{s.kp}</td><td><b>{s.cp+s.kp}</b></td></tr>)}</tbody>
+      </table></div>
+    </div>
+  );
+}
+
+function AttYearTab({students, attendance}){
+  const [q,setQ] = useState('');
+  const from = SEMESTERS.HK1[0]+'-01';
+  const lastM = SEMESTERS.HK2[SEMESTERS.HK2.length-1];
+  const [ly,lm] = lastM.split('-').map(Number);
+  const to = lastM+'-'+String(new Date(ly,lm,0).getDate()).padStart(2,'0');
+  const rows = useMemo(()=>students.map(s=>({...s,
+    cp: attCountBetween(attendance,s.ma,from,to,'absent_p'),
+    kp: attCountBetween(attendance,s.ma,from,to,'absent_k')
+  })), [students, attendance]);
+  const filtered = useMemo(()=>{ const k=q.trim().toLowerCase(); return k?rows.filter(s=>(s.ten||'').toLowerCase().includes(k)):rows; },[rows,q]);
+  return (
+    <div className="card">
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+        <h3><span className="secnum">2.4</span>Tổng hợp chuyên cần năm học 2026–2027</h3>
+        <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+          <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:170,minWidth:110}} value={q} onChange={e=>setQ(e.target.value)}/>
+          <button className="btn sec" onClick={()=>exportXlsx(filtered.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Vắng có phép':s.cp,'Vắng không phép':s.kp,'Tổng số buổi nghỉ':s.cp+s.kp})), 'chuyen_can_nam_hoc.xlsx', 'Chuyen can nam', 'TỔNG HỢP CHUYÊN CẦN NĂM HỌC 2026-2027')}>⬇️ Xuất Excel</button>
+        </div>
+      </div>
+      <div className="tbl-wrap"><table>
+        <thead><tr><th>STT</th><th>Họ tên</th><th>Tổ</th><th>Vắng có phép</th><th>Vắng không phép</th><th>Tổng số buổi nghỉ</th></tr></thead>
+        <tbody>{filtered.map(s=><tr key={s.ma}><td>{s.stt}</td><td>{s.ten}</td><td>Tổ {s.to??'-'}</td><td>{s.cp}</td><td>{s.kp}</td><td><b>{s.cp+s.kp}</b></td></tr>)}</tbody>
       </table></div>
     </div>
   );
@@ -1207,7 +1374,7 @@ function AccountsTab({students, db, onSaved}){
     const rows = students.map(s=>({
       'STT': s.stt, 'Họ tên': s.ten, 'Chức vụ': CV_LABEL[s.chucvu]||'',
       'SĐT đăng nhập — Học sinh': s.sdt||'(chưa có)', 'Mật khẩu Học sinh (hiện tại)': s.pw_hs,
-      'SĐT đăng nhập — Phụ huynh': s.sdtcha||s.sdtme||s.sdt||'(chưa có)', 'Mật khẩu Phụ huynh (hiện tại)': s.pw_ph
+      'SĐT đăng nhập — Cha mẹ học sinh': s.sdtcha||s.sdtme||s.sdt||'(chưa có)', 'Mật khẩu Cha mẹ học sinh (hiện tại)': s.pw_ph
     }));
     exportXlsx(rows, 'tai_khoan_dang_nhap_11A2.xlsx', 'Tai khoan', 'DANH SÁCH TÀI KHOẢN ĐĂNG NHẬP');
   }
@@ -1224,7 +1391,7 @@ function AccountsTab({students, db, onSaved}){
       <p className="muted">Tên đăng nhập là <b>số điện thoại liên hệ</b> (học sinh/CBL dùng SĐT liên hệ; phụ huynh dùng SĐT cha, mẹ hoặc SĐT liên hệ — số nào đã lưu trong hồ sơ đều đăng nhập được). Mật khẩu hiển thị dưới đây là mật khẩu HIỆN TẠI. Bấm "Đặt lại mặc định" để trả về ngày sinh (học sinh) / SĐT liên hệ (phụ huynh).</p>
       {noPhone.length>0 && <p className="err">⚠️ {noPhone.length} học sinh chưa có SĐT liên hệ ({noPhone.map(s=>s.ten).join(', ')}) — các em này chưa đăng nhập được bằng số điện thoại, vào "Sửa hồ sơ" để bổ sung.</p>}
       <div className="tbl-wrap"><table>
-        <thead><tr><th>STT</th><th>Họ tên</th><th>Chức vụ</th><th>SĐT đăng nhập (HS)</th><th>MK Học sinh</th><th>SĐT đăng nhập (PH)</th><th>MK Phụ huynh</th><th>Thao tác</th></tr></thead>
+        <thead><tr><th>STT</th><th>Họ tên</th><th>Chức vụ</th><th>SĐT đăng nhập (HS)</th><th>MK Học sinh</th><th>SĐT đăng nhập (CMHS)</th><th>MK CMHS</th><th>Thao tác</th></tr></thead>
         <tbody>{students.map(s=>{
           const defHs = (s.ngaysinh||'').replace(/\//g,'') || '123456';
           const defPh = s.sdt || '123456';
@@ -1235,7 +1402,7 @@ function AccountsTab({students, db, onSaved}){
             <td style={{whiteSpace:'nowrap'}}>
               <button className="link" disabled={busy===s.ma+'pw_hs'} onClick={()=>resetPw(s.ma,'pw_hs',defHs)}>Đặt lại MK HS</button>
               {' · '}
-              <button className="link" disabled={busy===s.ma+'pw_ph'} onClick={()=>resetPw(s.ma,'pw_ph',defPh)}>Đặt lại MK PH</button>
+              <button className="link" disabled={busy===s.ma+'pw_ph'} onClick={()=>resetPw(s.ma,'pw_ph',defPh)}>Đặt lại MK CMHS</button>
             </td>
           </tr>;
         })}</tbody>
@@ -1244,17 +1411,32 @@ function AccountsTab({students, db, onSaved}){
   );
 }
 
-function StudentSelf({s, violations, attendance}){
+function StudentSelf({s, violations, attendance, weeks}){
   const myV = violations.filter(v=>v.ma===s.ma);
-  const t = totalOf(s.ma, violations); const r = xlRank(t);
   const myAtt = attendance.filter(a=>a.ma===s.ma);
   const cnt = code => myAtt.filter(a=>a.status===code).length;
   const stats = [
     {label:'Vắng có phép', n:cnt('absent_p'), cls:'mid'},
     {label:'Vắng không phép', n:cnt('absent_k'), cls:'bad'},
     {label:'Đi muộn', n:cnt('late'), cls:'mid'},
-    {label:'Có mặt', n:cnt('present'), cls:'good'},
   ];
+  const absDetail = useMemo(()=>myAtt.filter(a=>a.status==='absent_p'||a.status==='absent_k').sort((a,b)=>b.date.localeCompare(a.date)), [myAtt]);
+
+  const today = new Date().toISOString().slice(0,10);
+  const curWeek = weekNumberOfDate(today, weeks) || 1;
+  const curMonth = today.slice(0,7);
+  const curSem = SEMESTERS.HK1.includes(curMonth) ? 'HK1' : (SEMESTERS.HK2.includes(curMonth) ? 'HK2' : null);
+  const weekScoreVal = weekScore(s.ma, curWeek, violations, weeks);
+  const monthAvgVal = monthAvg(s.ma, curMonth, violations, weeks);
+  const semAvgVal = useMemo(()=>{
+    if(!curSem) return 100;
+    const months = SEMESTERS[curSem];
+    const active = months.filter(m=>violations.some(v=>monthOf(v.date)===m));
+    if(!active.length) return 100;
+    const vals = active.map(m=>monthAvg(s.ma,m,violations,weeks));
+    return vals.reduce((a,b)=>a+b,0)/vals.length;
+  }, [violations, weeks, curSem, s.ma]);
+
   const byType = useMemo(()=>{
     const groups = {};
     myV.filter(v=>v.diem<0).forEach(v=>{ const k=v.text; groups[k]=groups[k]||{text:k,n:0,diem:0}; groups[k].n++; groups[k].diem+=v.diem; });
@@ -1265,16 +1447,27 @@ function StudentSelf({s, violations, attendance}){
       <div className="card">
         <h2>{s.ten}</h2>
         <p className="muted">Mã định danh: {s.ma} · Tổ {s.to??'-'} · {s.gioitinh||''} · Sinh {s.ngaysinh||''}</p>
-        <div className="row2" style={{alignItems:'center',marginTop:10}}>
-          <div><div className="score">{t}</div><span className={"pill "+r.cls}>{r.label}</span></div>
-          <div className="muted">Điểm nề nếp tính từ 100, cộng/trừ theo các lượt ghi nhận bên dưới.</div>
-        </div>
+        <div className="tbl-wrap" style={{marginTop:10}}><table>
+          <thead><tr><th>Điểm thi đua tuần {curWeek}</th><th>ĐTB thi đua tháng {viMonth(curMonth)}</th><th>ĐTB thi đua {curSem==='HK1'?'Học kỳ 1':curSem==='HK2'?'Học kỳ 2':'học kỳ'}</th></tr></thead>
+          <tbody><tr>
+            <td style={{textAlign:'center'}}><b style={{fontSize:20}}>{weekScoreVal}</b><br/><span className={"pill "+xlRank(weekScoreVal).cls}>{xlRank(weekScoreVal).label}</span></td>
+            <td style={{textAlign:'center'}}><b style={{fontSize:20}}>{monthAvgVal.toFixed(1)}</b><br/><span className={"pill "+xlRank(monthAvgVal).cls}>{xlRank(monthAvgVal).label}</span></td>
+            <td style={{textAlign:'center'}}><b style={{fontSize:20}}>{semAvgVal.toFixed(1)}</b><br/><span className={"pill "+xlRank(semAvgVal).cls}>{xlRank(semAvgVal).label}</span></td>
+          </tr></tbody>
+        </table></div>
       </div>
       <div className="card">
         <h3>Chuyên cần</h3>
         <div style={{display:'flex',gap:20,flexWrap:'wrap',marginTop:6}}>
           {stats.map(x=><div key={x.label}><div className="score" style={{fontSize:24}}>{x.n}</div><span className={"pill "+x.cls}>{x.label}</span></div>)}
         </div>
+        <h3 style={{marginTop:18}}>Chi tiết các ngày vắng</h3>
+        {absDetail.length ? (
+          <div className="tbl-wrap"><table>
+            <thead><tr><th>Ngày</th><th>Loại</th></tr></thead>
+            <tbody>{absDetail.map(a=><tr key={a.date+a.status}><td>{viDate(a.date)}</td><td><span className={"pill "+(a.status==='absent_p'?'mid':'bad')}>{a.status==='absent_p'?'Vắng có phép':'Vắng không phép'}</span></td></tr>)}</tbody>
+          </table></div>
+        ) : <p className="muted">Chưa có buổi nghỉ nào.</p>}
       </div>
       <div className="card">
         <h3>Thống kê lỗi vi phạm</h3>

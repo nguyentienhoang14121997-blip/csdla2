@@ -86,7 +86,8 @@ label{font-size:12px;color:var(--ink2);display:block;margin-bottom:3px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .hero{padding:40px 16px;text-align:center}
 .hero h1{font-size:30px}
-.rolecards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:640px;margin:24px auto 0}
+.rolecards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:860px;margin:24px auto 0}
+@media(max-width:820px){.rolecards{grid-template-columns:repeat(2,1fr);max-width:520px}}
 @media(max-width:640px){.rolecards{grid-template-columns:1fr}.row2{grid-template-columns:1fr}}
 @media(max-width:600px){
   .wrap{padding:14px 10px 60px}
@@ -468,10 +469,10 @@ function Login({db, onLogin}){
         <h1>Chọn vai trò đăng nhập</h1>
         <p className="muted">THPT Cao Bá Quát — Quốc Oai · Năm học 2026–2027</p>
         <div className="rolecards">
-          <div className="rolecard" onClick={()=>choose('admin')}><b>Giáo viên chủ nhiệm</b><span>Toàn quyền: thêm/sửa/xoá học sinh, điểm danh, ghi lỗi, phân công cán bộ lớp.</span></div>
-          <div className="rolecard" onClick={()=>choose('cb')}><b>Cán bộ lớp</b><span>Lớp trưởng, Bí thư (toàn lớp) hoặc Tổ trưởng (riêng tổ mình) — quản lý điểm danh và ghi lỗi nề nếp.</span></div>
-          <div className="rolecard" onClick={()=>choose('hs')}><b>Học sinh</b><span>Xem thông tin và kết quả nề nếp của bản thân.</span></div>
-          <div className="rolecard" onClick={()=>choose('ph')}><b>Cha mẹ học sinh</b><span>Theo dõi chuyên cần và nề nếp của con.</span></div>
+          <div className="rolecard" onClick={()=>choose('admin')}><b>Giáo viên chủ nhiệm</b></div>
+          <div className="rolecard" onClick={()=>choose('cb')}><b>Cán bộ lớp</b></div>
+          <div className="rolecard" onClick={()=>choose('hs')}><b>Học sinh</b></div>
+          <div className="rolecard" onClick={()=>choose('ph')}><b>Cha mẹ học sinh</b></div>
         </div>
         {picking && (
           <div className="card" style={{maxWidth:420,margin:'22px auto 0',textAlign:'left'}}>

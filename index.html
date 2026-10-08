@@ -40,8 +40,9 @@
 html,body,#root{height:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:'Be Vietnam Pro',-apple-system,"Segoe UI",Roboto,Arial,sans-serif;}
 h1,h2,h3{font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-weight:600;margin:0 0 4px}
-h3{flex-basis:100%;width:100%}
-h3 + div{margin-left:auto}
+.hdr{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px}
+.hdr h3{flex-basis:100%;width:100%}
+.hdr > div{margin-left:auto}
 .wrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
 .top1{background:linear-gradient(90deg,var(--maroon2),var(--maroon) 65%,var(--maroon));color:#fff;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
@@ -272,6 +273,16 @@ const CV_LABEL = {lop_truong:'Lớp trưởng', bi_thu:'Bí thư', to_truong:'T�
 const CV_LABEL_REV = {'Lớp trưởng':'lop_truong', 'Bí thư':'bi_thu', 'Tổ trưởng':'to_truong'};
 function viDate(iso){ if(!iso) return ''; const p=String(iso).split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : iso; }
 function viMonth(ym){ if(!ym) return ''; const p=ym.split('-'); return p.length===2 ? 'Tháng '+parseInt(p[1],10)+'/'+p[0] : ym; }
+// Danh sách các tháng của năm học 2026–2027 (T8/2026 → T6/2027) để chọn, hiển thị tiếng Việt thay cho lịch gốc trình duyệt
+const SCHOOL_MONTHS = ['2026-08','2026-09','2026-10','2026-11','2026-12','2027-01','2027-02','2027-03','2027-04','2027-05','2027-06'];
+function MonthSelectVN({value, onChange, style}){
+  const opts = SCHOOL_MONTHS.includes(value) ? SCHOOL_MONTHS : [value, ...SCHOOL_MONTHS];
+  return (
+    <select style={{width:'auto', ...style}} value={value} onChange={e=>onChange(e.target.value)}>
+      {opts.map(m=><option key={m} value={m}>{viMonth(m)}</option>)}
+    </select>
+  );
+}
 const SCHOOL_NAME = 'TRƯỜNG THPT CAO BÁ QUÁT - QUỐC OAI';
 const CLASS_NAME = 'LỚP 11A2';
 const THIN = {style:'thin', color:{rgb:'B0B0B0'}};
@@ -852,15 +863,15 @@ function Roster({students, canEditRoster, onAdd, onEdit, onDel, onView, onQuickC
 
   return (
     <div className="card">
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',gap:10}}>
+      <div className="hdr">
         <h3><span className="secnum">1</span>Hồ sơ học sinh ({filtered.length}/{students.length})</h3>
-        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-          <input placeholder="🔍 Tìm tên, mã, tổ…" style={{width:'100%',maxWidth:220,minWidth:140}} value={q} onChange={e=>setQ(e.target.value)}/>
-          <button className="btn sec" onClick={exportExcel}>⬇️ Xuất Excel</button>
+        <div style={{display:'flex',gap:8,flexWrap:'nowrap',overflowX:'auto',maxWidth:'100%',paddingBottom:2}}>
+          <input placeholder="🔍 Tìm tên, mã, tổ…" style={{width:140,minWidth:100,flexShrink:1}} value={q} onChange={e=>setQ(e.target.value)}/>
+          <button className="btn sec" style={{flexShrink:0,whiteSpace:'nowrap'}} onClick={exportExcel}>⬇️ Xuất Excel</button>
           {canEditRoster && <>
             <input ref={el=>fileRef.current=el} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={handleFile}/>
-            <button className="btn sec" disabled={importing} onClick={()=>fileRef.current.click()}>{importing?'Đang nhập…':'⬆️ Nhập Excel'}</button>
-            <button className="btn" onClick={onAdd}>+ Thêm học sinh</button>
+            <button className="btn sec" style={{flexShrink:0,whiteSpace:'nowrap'}} disabled={importing} onClick={()=>fileRef.current.click()}>{importing?'Đang nhập…':'⬆️ Nhập Excel'}</button>
+            <button className="btn" style={{flexShrink:0,whiteSpace:'nowrap'}} onClick={onAdd}>+ Thêm học sinh</button>
           </>}
         </div>
       </div>
@@ -980,7 +991,7 @@ function RulesTab({rules, isAdmin, onSaveRules}){
   }
   return (
     <div className="card">
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+      <div className="hdr">
         <h3><span className="secnum">3.1</span>Danh mục lỗi ghi nề nếp ({rows.length} mục)</h3>
         {isAdmin && <div style={{display:'flex',gap:8}}>
           <button className="btn sec" onClick={addRule}>+ Thêm lỗi</button>
@@ -1022,11 +1033,11 @@ function AttMonthTab({students, attendance}){
   const filtered = useMemo(()=>{ const k=q.trim().toLowerCase(); return k?rows.filter(s=>(s.ten||'').toLowerCase().includes(k)):rows; },[rows,q]);
   return (
     <div className="card">
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+      <div className="hdr">
         <h3><span className="secnum">2.2</span>Tổng hợp chuyên cần theo tháng — {viMonth(month)}</h3>
         <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
           <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:170,minWidth:110}} value={q} onChange={e=>setQ(e.target.value)}/>
-          <input type="month" style={{width:'auto'}} value={month} onChange={e=>setMonth(e.target.value)}/>
+          <MonthSelectVN value={month} onChange={setMonth}/>
           <button className="btn sec" onClick={()=>exportAttendanceMonthTemplate(students, attendance, month)}>⬇️ Xuất Excel (đúng mẫu Sở GD&ĐT)</button>
         </div>
       </div>
@@ -1054,7 +1065,7 @@ function AttSemTab({students, attendance}){
   const filtered = useMemo(()=>{ const k=q.trim().toLowerCase(); return k?rows.filter(s=>(s.ten||'').toLowerCase().includes(k)):rows; },[rows,q]);
   return (
     <div className="card">
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+      <div className="hdr">
         <h3><span className="secnum">2.3</span>Tổng hợp chuyên cần theo học kỳ — {sem==='HK1'?'Học kỳ 1':'Học kỳ 2'}</h3>
         <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
           <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:170,minWidth:110}} value={q} onChange={e=>setQ(e.target.value)}/>
@@ -1085,7 +1096,7 @@ function AttYearTab({students, attendance}){
   const filtered = useMemo(()=>{ const k=q.trim().toLowerCase(); return k?rows.filter(s=>(s.ten||'').toLowerCase().includes(k)):rows; },[rows,q]);
   return (
     <div className="card">
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+      <div className="hdr">
         <h3><span className="secnum">2.4</span>Tổng hợp chuyên cần năm học 2026–2027</h3>
         <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
           <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:170,minWidth:110}} value={q} onChange={e=>setQ(e.target.value)}/>
@@ -1203,7 +1214,7 @@ function ThiDuaTab({students, violations, canLog, scopedMas, view, weeks, isAdmi
 
   return (
     <div className="card">
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+      <div className="hdr">
         <h3><span className="secnum">{view==='week'?'3.2':'3.3'}</span>{view==='week'?'Nhập thi đua theo tuần':'Tổng kết thi đua tháng'} — {view==='week' ? ('Tuần '+week+(wr?' ('+viDate(wr.start)+' – '+viDate(wr.end)+')':'')) : viMonth(month)}</h3>
         <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
           <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:160,minWidth:110}} value={q} onChange={e=>setQ(e.target.value)}/>
@@ -1215,7 +1226,7 @@ function ThiDuaTab({students, violations, canLog, scopedMas, view, weeks, isAdmi
             ? <select style={{width:'auto'}} value={week} onChange={e=>setWeek(parseInt(e.target.value,10))}>
                 {weeks.map((w,i)=><option key={i} value={i+1}>Tuần {i+1}</option>)}
               </select>
-            : <input type="month" style={{width:'auto'}} value={month} onChange={e=>setMonth(e.target.value)}/>}
+            : <MonthSelectVN value={month} onChange={setMonth}/>}
           <button className="btn sec" onClick={()=>{
             if(view==='week') exportXlsx(weekRowsF.map(s=>({'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to,'Điểm tuần':s.score,'Xếp loại':xlRank(s.score).label,'Hạng':s.rank})), 'thi_dua_tuan'+week+'.xlsx', 'Tuan '+week, 'THI ĐUA TUẦN '+week, wr?[viDate(wr.start),viDate(wr.end)]:null);
             else exportXlsx(monthRowsF.map(s=>{ const o={'STT':s.stt,'Họ tên':s.ten,'Tổ':s.to}; s.ws.forEach((v,i)=>o['Tuần '+(monthWeekNums[i])]=v); o['TB tháng']=s.avg.toFixed(1); o['Xếp loại']=xlRank(s.avg).label; o['Hạng']=s.rank; o['Tăng bậc']=bacText(bacValue(prevMap,s.ma,s.rank)); return o; }), 'thi_dua_thang_'+month+'.xlsx', 'Thang', 'TỔNG KẾT THI ĐUA '+viMonth(month).toUpperCase());
@@ -1332,16 +1343,16 @@ function SummaryTab({students, violations, attendance, view, weeks}){
 
   return (
     <div className="card">
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,marginBottom:8}}>
+      <div className="hdr">
         <h3><span className="secnum">{view==='month'?'4.1':'4.2'}</span>{view==='month'?'Tổng kết theo tháng — '+viMonth(month):'Tổng kết học kỳ — '+(sem==='HK1'?'Học kỳ 1':'Học kỳ 2')}</h3>
-        <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+        <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'nowrap',overflowX:'auto',maxWidth:'100%',paddingBottom:2}}>
           {view==='month'
-            ? <input type="month" style={{width:'auto'}} value={month} onChange={e=>setMonth(e.target.value)}/>
-            : <select style={{width:'auto'}} value={sem} onChange={e=>setSem(e.target.value)}>
+            ? <MonthSelectVN value={month} onChange={setMonth} style={{flexShrink:0}}/>
+            : <select style={{width:'auto',flexShrink:0}} value={sem} onChange={e=>setSem(e.target.value)}>
                 <option value="HK1">Học kỳ 1 (tháng 9–12)</option><option value="HK2">Học kỳ 2 (tháng 1–5)</option>
               </select>}
-          <input placeholder="🔍 Tìm tên…" style={{width:'100%',maxWidth:180,minWidth:120}} value={q} onChange={e=>setQ(e.target.value)}/>
-          <button className="btn sec" onClick={doExport}>⬇️ Xuất Excel</button>
+          <input placeholder="🔍 Tìm tên…" style={{width:140,minWidth:100,flexShrink:1}} value={q} onChange={e=>setQ(e.target.value)}/>
+          <button className="btn sec" style={{flexShrink:0,whiteSpace:'nowrap'}} onClick={doExport}>⬇️ Xuất Excel</button>
         </div>
       </div>
       {view==='month' ? (
@@ -1391,7 +1402,7 @@ function AccountsTab({students, db, onSaved}){
   const noPhone = students.filter(s=>!s.sdt);
   return (
     <div className="card">
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',gap:10}}>
+      <div className="hdr">
         <h3><span className="secnum">5</span>Quản lý tài khoản</h3>
         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
           <button className="btn sec" onClick={resetAdminPw}>Đặt lại MK GVCN mặc định</button>
@@ -1467,7 +1478,7 @@ function StudentSelf({s, violations, attendance, weeks}){
               </select></div>
             </th>
             <th>ĐTB thi đua tháng
-              <div><input type="month" style={{width:'auto',marginTop:4,fontWeight:400,textTransform:'none'}} value={selMonth} onChange={e=>setSelMonth(e.target.value)}/></div>
+              <div><MonthSelectVN value={selMonth} onChange={setSelMonth} style={{marginTop:4,fontWeight:400,textTransform:'none'}}/></div>
             </th>
             <th>ĐTB thi đua học kỳ
               <div><select style={{width:'auto',marginTop:4,fontWeight:400,textTransform:'none'}} value={selSem} onChange={e=>setSelSem(e.target.value)}>
